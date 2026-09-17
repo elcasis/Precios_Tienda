@@ -6,35 +6,36 @@
   <title>TPV & Escáner - Mi Tienda</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Motor ZXing Oficial (el mismo usado en Patriorigen) -->
-  <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
+  <!-- Motor ZXing Oficial (Misma librería que Patriorigen) -->
+  <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
-    /* Láser de escaneo estilo Patriorigen */
-    @keyframes scan-laser {
-      0% { top: 8%; opacity: 0.8; }
-      50% { top: 92%; opacity: 1; }
-      100% { top: 8%; opacity: 0.8; }
+    /* Láser de escaneo animado */
+    @keyframes laser-move {
+      0% { top: 10%; opacity: 0.8; }
+      50% { top: 90%; opacity: 1; }
+      100% { top: 10%; opacity: 0.8; }
     }
     .scanner-laser {
       position: absolute;
-      left: 4%;
-      right: 4%;
+      left: 5%;
+      right: 5%;
       height: 2px;
       background: #22c55e;
-      box-shadow: 0 0 10px 3px rgba(34, 197, 94, 0.9);
-      animation: scan-laser 1.8s infinite ease-in-out;
+      box-shadow: 0 0 12px 3px rgba(34, 197, 94, 0.9);
+      animation: laser-move 1.6s infinite ease-in-out;
       pointer-events: none;
       z-index: 20;
     }
 
-    /* Vídeo nativo a pantalla completa dentro del recuadro */
+    /* Vídeo nativo adaptado a pantalla de móvil */
     #video {
       width: 100%;
       height: 100%;
       object-fit: cover !important;
+      background: #000;
     }
 
     @media print {
@@ -61,7 +62,7 @@
         <i class="fa-solid fa-candy-cane text-2xl"></i>
         <div>
           <h1 class="font-black text-lg leading-tight tracking-wide">MI TIENDA</h1>
-          <p class="text-xs text-amber-100">Escáner Instantáneo Patriorigen</p>
+          <p class="text-xs text-amber-100">Escáner Comercial Retail</p>
         </div>
       </div>
       <span id="product-count-badge" class="bg-white/20 text-xs px-2.5 py-1 rounded-full font-bold">0 prod.</span>
@@ -80,39 +81,39 @@
         <div class="flex justify-between items-center mb-2">
           <div class="flex items-center gap-1.5">
             <span id="status-badge" class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-              <i class="fa-solid fa-camera"></i> Cámara Activa
+              <i class="fa-solid fa-circle-dot text-emerald-600 text-[8px] animate-pulse"></i> Lector Listo
             </span>
           </div>
-          <button onclick="toggleCamera()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg font-medium transition">
-            <i class="fa-solid fa-power-off"></i> Reiniciar
+          <button onclick="startCamera()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg font-medium transition">
+            <i class="fa-solid fa-rotate-right"></i> Reiniciar
           </button>
         </div>
 
-        <!-- Visor del escáner idéntico al de Patriorigen -->
+        <!-- Visor del escáner idéntico a Patriorigen -->
         <div class="overflow-hidden rounded-xl bg-black aspect-video relative flex items-center justify-center border border-slate-800 shadow-inner">
           <video id="video" playsinline autoplay muted></video>
           
-          <!-- Marco de lectura con esquinas -->
+          <!-- Marco de lectura con esquinas verdes -->
           <div class="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
-            <div class="w-[85%] h-[65%] border-2 border-emerald-400/90 rounded-xl relative shadow-sm">
+            <div class="w-[85%] h-[65%] border-2 border-emerald-400 rounded-xl relative shadow-sm">
               <span class="scanner-laser"></span>
             </div>
           </div>
 
-          <!-- Mensaje de carga -->
+          <!-- Mensaje de carga o activación manual -->
           <div id="camera-placeholder" class="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center text-white p-4 text-center z-30">
-            <i class="fa-solid fa-circle-notch fa-spin text-3xl text-rose-500 mb-2"></i>
-            <strong class="text-sm">Iniciando cámara...</strong>
-            <span class="text-xs text-slate-400 mt-1">Acepta el permiso para escanear</span>
-            <button onclick="startCamera()" class="mt-3 bg-rose-600 hover:bg-rose-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold">
+            <i class="fa-solid fa-camera text-3xl text-rose-500 mb-2"></i>
+            <strong class="text-sm">Cámara preparada</strong>
+            <span class="text-xs text-slate-400 mt-1">Pulsa para iniciar el escáner</span>
+            <button onclick="startCamera()" class="mt-3 bg-rose-600 hover:bg-rose-700 text-white text-xs px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-rose-600/30">
               Activar Cámara
             </button>
           </div>
         </div>
 
-        <!-- Entrada manual rápida por si el código está roto -->
+        <!-- Entrada manual -->
         <div class="mt-3 flex gap-2">
-          <input type="text" id="manual-barcode-input" placeholder="O teclea el código aquí..." class="flex-1 bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500 font-mono">
+          <input type="text" id="manual-barcode-input" placeholder="O teclea el código manual..." class="flex-1 bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500 font-mono">
           <button onclick="handleManualSearch()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold transition">
             Buscar
           </button>
@@ -145,7 +146,7 @@
         </div>
 
         <button onclick="resumeScanning()" class="w-full mt-2 text-xs text-slate-500 hover:text-slate-800 py-1.5 font-semibold">
-          <i class="fa-solid fa-rotate-right"></i> Seguir escaneando otro producto
+          <i class="fa-solid fa-rotate-right"></i> Escanear siguiente producto
         </button>
       </div>
 
@@ -159,7 +160,7 @@
             <h3 class="font-bold text-slate-800 text-lg">Producto no registrado</h3>
             <p class="text-xs text-slate-500 mt-0.5">Código: <span id="not-found-code" class="font-mono font-black text-slate-800 bg-slate-100 px-2 py-0.5 rounded"></span></p>
           </div>
-          <p class="text-sm text-slate-600">¿Quieres añadir este producto al catálogo de tu tienda?</p>
+          <p class="text-sm text-slate-600">¿Quieres dar de alta este producto en tu catálogo?</p>
           <button onclick="openAddProductWithCode()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-amber-500/20 text-sm flex items-center justify-center gap-2">
             <i class="fa-solid fa-plus-circle"></i> Sí, Añadir Producto
           </button>
@@ -401,7 +402,7 @@
 
   <div id="print-area" class="hidden"></div>
 
-  <!-- JAVASCRIPT: MOTOR PATRIORIGEN DIRECTO -->
+  <!-- JAVASCRIPT: MOTOR IDÉNTICO A PATRIORIGEN -->
   <script>
     let products = JSON.parse(localStorage.getItem('tienda_productos') || '{}');
     let currentOrder = JSON.parse(localStorage.getItem('tienda_pedido_actual') || '[]');
@@ -410,89 +411,106 @@
     let lastScanTime = 0;
     let lastScannedCode = null;
 
-    function playBeep(freq = 880, duration = 0.12) {
+    function playBeep() {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.connect(gain);
         gain.connect(ctx.destination);
-        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
         gain.gain.setValueAtTime(0.15, ctx.currentTime);
         osc.start();
-        osc.stop(ctx.currentTime + duration);
+        osc.stop(ctx.currentTime + 0.12);
       } catch (e) {}
     }
 
     function notifySuccess() {
       if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-      playBeep(880, 0.12);
+      playBeep();
     }
 
     function notifyNotFound() {
       if (navigator.vibrate) navigator.vibrate(200);
-      playBeep(340, 0.22);
+      playBeep();
     }
 
-    // INICIALIZAR Y ARRANCAR MOTOR EXACTO DE PATRIORIGEN
+    // INICIAR CÁMARA (Llamada limpia sin deviceId problemático)
     async function startCamera() {
       const placeholder = document.getElementById('camera-placeholder');
       const statusBadge = document.getElementById('status-badge');
 
-      placeholder.classList.remove('hidden');
+      // Esperar si la librería ZXing tarda medio segundo en cargar desde el CDN
+      if (!window.ZXing) {
+        let retries = 0;
+        while (!window.ZXing && retries < 15) {
+          await new Promise(r => setTimeout(r, 200));
+          retries++;
+        }
+      }
+
+      if (!window.ZXing) {
+        placeholder.innerHTML = `
+          <div class="p-4 text-center">
+            <i class="fa-solid fa-wifi text-amber-500 text-3xl mb-2"></i>
+            <p class="text-xs font-bold text-white">Comprueba tu conexión a internet</p>
+            <p class="text-[10px] text-slate-400 mt-1">No se pudo cargar la librería ZXing.</p>
+            <button onclick="startCamera()" class="mt-3 bg-rose-600 hover:bg-rose-700 text-white text-xs px-4 py-2 rounded-xl font-bold">
+              Reintentar
+            </button>
+          </div>
+        `;
+        return;
+      }
 
       try {
         if (!codeReader) {
-          // Configuración de formatos comerciales idéntica a Patriorigen
           const hints = new Map();
           hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
             ZXing.BarcodeFormat.EAN_13,
             ZXing.BarcodeFormat.EAN_8,
             ZXing.BarcodeFormat.UPC_A,
-            ZXing.BarcodeFormat.UPC_E
+            ZXing.BarcodeFormat.UPC_E,
+            ZXing.BarcodeFormat.CODE_128
           ]);
           hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
 
           codeReader = new ZXing.BrowserMultiFormatReader(hints);
         }
 
-        // Buscar cámara trasera en el dispositivo
-        const videoInputDevices = await codeReader.listVideoInputDevices();
-        let selectedDeviceId = undefined;
+        // Detener si estuviera en marcha
+        codeReader.reset();
 
-        if (videoInputDevices && videoInputDevices.length > 0) {
-          const backCam = videoInputDevices.find(dev => 
-            dev.label.toLowerCase().includes('back') || 
-            dev.label.toLowerCase().includes('trasera') || 
-            dev.label.toLowerCase().includes('environment')
-          );
-          selectedDeviceId = backCam ? backCam.deviceId : videoInputDevices[videoInputDevices.length - 1].deviceId;
-        }
+        // LLAMADA DIRECTA: Pide la cámara trasera por constraints estándar (Igual que en Patriorigen)
+        const constraints = {
+          video: {
+            facingMode: { ideal: "environment" }
+          },
+          audio: false
+        };
 
-        // Conectar decodificador directo al elemento <video id="video">
-        codeReader.decodeFromVideoDevice(selectedDeviceId, 'video', (result, err) => {
+        await codeReader.decodeFromConstraints(constraints, 'video', (result, err) => {
           if (result) {
-            const code = result.getText();
-            onBarcodeScanned(code);
+            onBarcodeScanned(result.getText());
           }
-          if (err && !(err instanceof ZXing.NotFoundException)) {
-            // Ignorar fotogramas sin código (comportamiento normal continuo)
-          }
+          // Ignorar silenciosamente las excepciones de cuadro vacío
         });
 
         isScanning = true;
         placeholder.classList.add('hidden');
-        statusBadge.innerHTML = `<i class="fa-solid fa-camera"></i> Escaneando`;
-        statusBadge.className = "text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold flex items-center gap-1";
+        statusBadge.innerHTML = `<i class="fa-solid fa-circle-dot text-emerald-600 text-[8px] animate-pulse"></i> Escaneando...`;
       } catch (err) {
-        console.error("Error cámara:", err);
+        console.error("Error al iniciar cámara:", err);
+        placeholder.classList.remove('hidden');
         placeholder.innerHTML = `
-          <i class="fa-solid fa-triangle-exclamation text-amber-500 text-3xl mb-2"></i>
-          <p class="text-xs font-bold text-white">No se pudo acceder a la cámara</p>
-          <p class="text-[10px] text-slate-400 mt-1">${err.message || err}</p>
-          <button onclick="startCamera()" class="mt-3 bg-rose-600 hover:bg-rose-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold">
-            Reintentar
-          </button>
+          <div class="p-4 text-center">
+            <i class="fa-solid fa-camera text-rose-500 text-3xl mb-2"></i>
+            <strong class="text-sm text-white block">Permiso de cámara necesario</strong>
+            <span class="text-xs text-slate-300 mt-1 block">Pulsa el botón para permitir el acceso</span>
+            <button onclick="startCamera()" class="mt-4 bg-rose-600 hover:bg-rose-700 text-white text-xs px-5 py-2.5 rounded-xl font-bold shadow-lg">
+              Activar Cámara
+            </button>
+          </div>
         `;
       }
     }
@@ -506,7 +524,7 @@
 
     function toggleCamera() {
       stopCamera();
-      setTimeout(startCamera, 300);
+      setTimeout(startCamera, 200);
     }
 
     function resumeScanning() {
@@ -515,7 +533,7 @@
       if (!isScanning) startCamera();
     }
 
-    // LECTURA EXITOSA
+    // LECTURA DE CÓDIGO EXITOSA
     function onBarcodeScanned(code) {
       const now = Date.now();
       if (code === lastScannedCode && (now - lastScanTime < 3000)) return;
@@ -531,7 +549,7 @@
       processBarcode(val);
     }
 
-    // PROCESAR PRODUCTO
+    // PROCESAMIENTO DEL PRODUCTO
     function processBarcode(code) {
       const product = products[code];
       const cardFound = document.getElementById('card-found');
@@ -644,7 +662,7 @@
       const category = document.getElementById('input-category').value;
       const price = parseFloat(document.getElementById('input-price').value);
 
-      if (!barcode || !name || !category || isNaN(price)) return alert("Por favor completa los campos requeridos.");
+      if (!barcode || !name || !category || isNaN(price)) return alert("Por favor completa los campos obligatorios.");
 
       const prod = { barcode, name, category, price, updatedAt: new Date().toISOString() };
       if (category === 'encurtido') prod.unidades = document.getElementById('input-unidades').value.trim();
@@ -670,7 +688,7 @@
       processBarcode(barcode);
     }
 
-    // GESTIÓN DE PEDIDO
+    // PEDIDOS
     function promptAddToOrderFromFound() {
       const barcode = document.getElementById('found-barcode').textContent;
       addToOrder(barcode, 1);
@@ -1030,6 +1048,7 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       updateBadge();
+      // Intenta arrancar, y si iOS Safari exige toque, el botón "Activar Cámara" estará listo
       startCamera();
     });
   </script>
