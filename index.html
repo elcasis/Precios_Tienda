@@ -2,36 +2,38 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>TPV & Escáner - Mi Tienda</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Librería Html5Qrcode -->
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <!-- Iconos FontAwesome -->
+  <!-- Motor ZXing Oficial (el mismo usado en Patriorigen) -->
+  <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
+  <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
-    @keyframes laser-scan {
-      0% { top: 15%; opacity: 0.9; }
-      50% { top: 85%; opacity: 1; }
-      100% { top: 15%; opacity: 0.9; }
+    /* Láser de escaneo estilo Patriorigen */
+    @keyframes scan-laser {
+      0% { top: 8%; opacity: 0.8; }
+      50% { top: 92%; opacity: 1; }
+      100% { top: 8%; opacity: 0.8; }
     }
     .scanner-laser {
       position: absolute;
-      left: 10%;
-      right: 10%;
+      left: 4%;
+      right: 4%;
       height: 2px;
       background: #22c55e;
-      box-shadow: 0 0 10px 2px rgba(34, 197, 94, 0.9);
-      animation: laser-scan 1.5s infinite ease-in-out;
+      box-shadow: 0 0 10px 3px rgba(34, 197, 94, 0.9);
+      animation: scan-laser 1.8s infinite ease-in-out;
       pointer-events: none;
-      z-index: 10;
+      z-index: 20;
     }
 
-    #reader video {
-      transition: transform 0.2s ease-out;
-      transform-origin: center center;
+    /* Vídeo nativo a pantalla completa dentro del recuadro */
+    #video {
+      width: 100%;
+      height: 100%;
       object-fit: cover !important;
     }
 
@@ -59,12 +61,10 @@
         <i class="fa-solid fa-candy-cane text-2xl"></i>
         <div>
           <h1 class="font-black text-lg leading-tight tracking-wide">MI TIENDA</h1>
-          <p class="text-xs text-amber-100">Lector EAN Oficial Retail</p>
+          <p class="text-xs text-amber-100">Escáner Instantáneo Patriorigen</p>
         </div>
       </div>
-      <div class="flex items-center space-x-2">
-        <span id="product-count-badge" class="bg-white/20 text-xs px-2 py-1 rounded-full font-semibold">0 prod.</span>
-      </div>
+      <span id="product-count-badge" class="bg-white/20 text-xs px-2.5 py-1 rounded-full font-bold">0 prod.</span>
     </div>
   </header>
 
@@ -75,65 +75,44 @@
     <!-- ============================================== -->
     <section id="view-scanner" class="space-y-4">
       
-      <!-- CONTENEDOR DE CÁMARA -->
       <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
         
         <div class="flex justify-between items-center mb-2">
-          <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm">
-            <i class="fa-solid fa-barcode text-rose-500"></i> Escáner EAN-13 / EAN-8
-          </h2>
-          <div class="flex items-center gap-1">
-            <button id="btn-torch" onclick="toggleTorch()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg font-medium transition flex items-center gap-1">
-              <i class="fa-regular fa-lightbulb"></i> <span id="torch-text" class="text-[11px]">Luz</span>
-            </button>
-            <button onclick="toggleCamera()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg font-medium transition">
-              <i class="fa-solid fa-power-off"></i>
-            </button>
+          <div class="flex items-center gap-1.5">
+            <span id="status-badge" class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+              <i class="fa-solid fa-camera"></i> Cámara Activa
+            </span>
           </div>
-        </div>
-
-        <!-- Visor del escáner -->
-        <div class="overflow-hidden rounded-xl bg-black aspect-video relative flex items-center justify-center border border-slate-800 shadow-inner">
-          <div id="reader" class="w-full h-full"></div>
-          <div id="scanner-laser" class="scanner-laser hidden"></div>
-
-          <!-- Selector ZOOM -->
-          <div class="absolute top-2 right-2 flex bg-black/60 backdrop-blur rounded-lg p-0.5 z-20 space-x-0.5 border border-white/20">
-            <button onclick="setZoom(1.0)" id="zoom-btn-1" class="px-2 py-0.5 text-xs font-bold rounded text-white bg-rose-600 transition">1x</button>
-            <button onclick="setZoom(1.8)" id="zoom-btn-2" class="px-2 py-0.5 text-xs font-bold rounded text-white/80 hover:text-white transition">2x</button>
-            <button onclick="setZoom(2.8)" id="zoom-btn-3" class="px-2 py-0.5 text-xs font-bold rounded text-white/80 hover:text-white transition">3x</button>
-          </div>
-
-          <!-- Marco de guía -->
-          <div class="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
-            <div class="w-[85%] h-[55%] border-2 border-dashed border-emerald-400/80 rounded-lg shadow-sm"></div>
-          </div>
-
-          <!-- Mensaje de inicio de cámara -->
-          <div id="camera-loading-message" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center text-white p-4 text-center z-30">
-            <i class="fa-solid fa-circle-notch fa-spin text-3xl text-rose-500 mb-2"></i>
-            <p class="text-xs font-semibold">Iniciando cámara trasera...</p>
-            <p class="text-[10px] text-slate-400 mt-1">Acepta el permiso en tu navegador</p>
-            <button onclick="startCamera()" class="mt-3 bg-rose-600 hover:bg-rose-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold">
-              Iniciar Cámara
-            </button>
-          </div>
-        </div>
-
-        <!-- BOTÓN DE CAPTURA CON AUTO-CONTRASTE -->
-        <div class="mt-3">
-          <button onclick="captureAndProcessWithContrast()" class="w-full bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 text-white font-bold py-3 px-4 rounded-xl shadow-md flex items-center justify-center gap-2 text-sm active:scale-98 transition">
-            <i class="fa-solid fa-wand-magic-sparkles text-lg text-amber-200"></i>
-            <span>Capturar Foto y Leer Código EAN</span>
+          <button onclick="toggleCamera()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg font-medium transition">
+            <i class="fa-solid fa-power-off"></i> Reiniciar
           </button>
-          <p class="text-[11px] text-slate-400 text-center mt-1">
-            Reconoce directamente códigos comerciales españoles (EAN-13) eliminando brillos.
-          </p>
         </div>
 
-        <!-- Entrada manual -->
-        <div class="mt-3 pt-2 border-t border-slate-100 flex gap-2">
-          <input type="text" id="manual-barcode-input" placeholder="O introduce los números manualmente..." class="flex-1 bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500 font-mono">
+        <!-- Visor del escáner idéntico al de Patriorigen -->
+        <div class="overflow-hidden rounded-xl bg-black aspect-video relative flex items-center justify-center border border-slate-800 shadow-inner">
+          <video id="video" playsinline autoplay muted></video>
+          
+          <!-- Marco de lectura con esquinas -->
+          <div class="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
+            <div class="w-[85%] h-[65%] border-2 border-emerald-400/90 rounded-xl relative shadow-sm">
+              <span class="scanner-laser"></span>
+            </div>
+          </div>
+
+          <!-- Mensaje de carga -->
+          <div id="camera-placeholder" class="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center text-white p-4 text-center z-30">
+            <i class="fa-solid fa-circle-notch fa-spin text-3xl text-rose-500 mb-2"></i>
+            <strong class="text-sm">Iniciando cámara...</strong>
+            <span class="text-xs text-slate-400 mt-1">Acepta el permiso para escanear</span>
+            <button onclick="startCamera()" class="mt-3 bg-rose-600 hover:bg-rose-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold">
+              Activar Cámara
+            </button>
+          </div>
+        </div>
+
+        <!-- Entrada manual rápida por si el código está roto -->
+        <div class="mt-3 flex gap-2">
+          <input type="text" id="manual-barcode-input" placeholder="O teclea el código aquí..." class="flex-1 bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500 font-mono">
           <button onclick="handleManualSearch()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold transition">
             Buscar
           </button>
@@ -152,7 +131,7 @@
         <div id="found-details" class="mt-2 text-xs text-slate-600 space-y-1 bg-slate-50 p-2.5 rounded-lg border border-slate-200"></div>
 
         <div class="mt-4 flex items-baseline justify-between">
-          <span class="text-xs text-slate-500 font-medium">Precio:</span>
+          <span class="text-xs text-slate-500 font-medium">Precio de venta:</span>
           <span id="found-price" class="text-3xl font-black text-emerald-600">0.00 €</span>
         </div>
 
@@ -164,94 +143,33 @@
             <i class="fa-solid fa-pen-to-square"></i> Editar
           </button>
         </div>
+
+        <button onclick="resumeScanning()" class="w-full mt-2 text-xs text-slate-500 hover:text-slate-800 py-1.5 font-semibold">
+          <i class="fa-solid fa-rotate-right"></i> Seguir escaneando otro producto
+        </button>
       </div>
 
       <!-- TARJETA: PRODUCTO NO ENCONTRADO -->
-      <div id="card-not-found" class="hidden bg-white border-2 border-amber-400 rounded-2xl p-5 shadow-md">
+      <div id="card-not-found" class="hidden bg-white border-2 border-amber-400 rounded-2xl p-5 shadow-md animate-fade-in">
         <div class="text-center space-y-3">
           <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-xl">
             <i class="fa-solid fa-question"></i>
           </div>
           <div>
             <h3 class="font-bold text-slate-800 text-lg">Producto no registrado</h3>
-            <div class="flex items-center justify-center gap-2 mt-1">
-              <span class="text-xs text-slate-500">Código:</span>
-              <span id="not-found-code" class="font-mono font-black text-base text-slate-800 bg-slate-100 px-2 py-0.5 rounded-lg"></span>
-              <button onclick="editNotFoundCode()" class="text-rose-600 hover:text-rose-800 text-xs font-bold" title="Corregir código">
-                <i class="fa-solid fa-pen"></i>
-              </button>
-            </div>
+            <p class="text-xs text-slate-500 mt-0.5">Código: <span id="not-found-code" class="font-mono font-black text-slate-800 bg-slate-100 px-2 py-0.5 rounded"></span></p>
           </div>
-          <p class="text-sm text-slate-600">¿Quieres añadirlo a tu catálogo ahora?</p>
+          <p class="text-sm text-slate-600">¿Quieres añadir este producto al catálogo de tu tienda?</p>
           <button onclick="openAddProductWithCode()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-amber-500/20 text-sm flex items-center justify-center gap-2">
             <i class="fa-solid fa-plus-circle"></i> Sí, Añadir Producto
+          </button>
+          <button onclick="resumeScanning()" class="text-xs text-slate-500 hover:text-slate-800 font-semibold block mx-auto pt-1">
+            Cancelar y volver a escanear
           </button>
         </div>
       </div>
 
     </section>
-
-    <!-- ============================================== -->
-    <!-- MODAL DE CAPTURA CON FILTROS DE CONTRASTE -->
-    <!-- ============================================== -->
-    <div id="modal-capture-review" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-3">
-      <div class="bg-white w-full max-w-sm rounded-2xl p-4 shadow-2xl border border-slate-200 space-y-3">
-        
-        <div class="flex justify-between items-center border-b pb-2">
-          <h3 class="font-black text-slate-800 text-sm flex items-center gap-2">
-            <i class="fa-solid fa-sliders text-rose-500"></i> Ajuste de Contraste y Código
-          </h3>
-          <button onclick="closeCaptureReviewModal()" class="text-slate-400 hover:text-slate-600 text-lg">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-
-        <!-- Vista de la imagen capturada / filtrada -->
-        <div class="rounded-xl overflow-hidden bg-slate-900 border border-slate-300 relative aspect-video flex items-center justify-center">
-          <canvas id="capture-processed-canvas" class="w-full h-full object-contain"></canvas>
-        </div>
-
-        <!-- Botones de filtros -->
-        <div>
-          <span class="text-[10px] font-bold uppercase text-slate-400 block mb-1">Prueba otro filtro si no lo lee:</span>
-          <div class="grid grid-cols-4 gap-1 text-[10px] font-bold">
-            <button onclick="applyFilterAndScan('normal')" id="btn-filt-normal" class="py-1.5 px-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700">Normal</button>
-            <button onclick="applyFilterAndScan('contrast')" id="btn-filt-contrast" class="py-1.5 px-1 bg-rose-100 text-rose-700 rounded-lg">⚡ Contraste</button>
-            <button onclick="applyFilterAndScan('bw')" id="btn-filt-bw" class="py-1.5 px-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700">🔲 B/N Puro</button>
-            <button onclick="applyFilterAndScan('invert')" id="btn-filt-invert" class="py-1.5 px-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700">🔄 Invertido</button>
-          </div>
-        </div>
-
-        <!-- Estado de detección -->
-        <div id="capture-status-badge" class="p-2 rounded-xl text-xs flex items-center gap-2 font-medium bg-slate-100 text-slate-700 border border-slate-200">
-          <i id="capture-status-icon" class="fa-solid fa-circle-notch fa-spin text-rose-500"></i>
-          <span id="capture-status-text" class="text-[11px]">Buscando código comercial EAN...</span>
-        </div>
-
-        <!-- Campo de dígitos con teclado numérico -->
-        <div>
-          <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Números del Código (editable):</label>
-          <div class="relative">
-            <input type="text" id="capture-code-input" inputmode="numeric" pattern="[0-9]*" class="w-full bg-slate-50 border-2 border-slate-300 font-mono font-bold text-center text-xl text-slate-800 py-2.5 rounded-xl focus:border-rose-500 outline-none tracking-wider" placeholder="Ej: 8423286000342">
-            <button onclick="document.getElementById('capture-code-input').value = ''" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600 text-xs">
-              <i class="fa-solid fa-circle-xmark text-sm"></i>
-            </button>
-          </div>
-          <p class="text-[10px] text-slate-400 mt-1">Compara con los números bajo las barras del bote.</p>
-        </div>
-
-        <!-- Botones de acción -->
-        <div class="grid grid-cols-2 gap-2 pt-1">
-          <button onclick="closeCaptureReviewModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs">
-            Repetir Foto
-          </button>
-          <button onclick="submitCapturedCode()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md shadow-rose-600/20">
-            Aceptar / Buscar
-          </button>
-        </div>
-
-      </div>
-    </div>
 
     <!-- ============================================== -->
     <!-- 2. FORMULARIO PRODUCTO (ALTA / EDICIÓN) -->
@@ -483,77 +401,16 @@
 
   <div id="print-area" class="hidden"></div>
 
-  <!-- JAVASCRIPT -->
+  <!-- JAVASCRIPT: MOTOR PATRIORIGEN DIRECTO -->
   <script>
     let products = JSON.parse(localStorage.getItem('tienda_productos') || '{}');
     let currentOrder = JSON.parse(localStorage.getItem('tienda_pedido_actual') || '[]');
-    let html5QrCode = null;
-    let cameraRunning = false;
-    let currentZoomLevel = 1.0;
-    let torchActive = false;
-    let rawCapturedCanvas = null;
+    let codeReader = null;
+    let isScanning = false;
     let lastScanTime = 0;
     let lastScannedCode = null;
 
-    // VALIDACIÓN ESTRICTA DE CÓDIGOS DE BARRAS DE TIENDA (Elimina lecturas fantasma de 18 cifras)
-    function isValidRetailBarcode(code) {
-      if (!code) return false;
-      code = code.trim();
-
-      // EAN-13 (El estándar español y europeo: 13 dígitos con suma de comprobación)
-      if (/^\d{13}$/.test(code)) {
-        return verifyEAN13Checksum(code);
-      }
-      // EAN-8 (Para productos pequeños como chicles y caramelos: 8 dígitos)
-      if (/^\d{8}$/.test(code)) {
-        return verifyEAN8Checksum(code);
-      }
-      // UPC-A (12 dígitos, productos importados)
-      if (/^\d{12}$/.test(code)) {
-        return true;
-      }
-      // Code 128 limpio (máximo 14 caracteres)
-      if (/^[A-Za-z0-9\-_]{4,14}$/.test(code)) {
-        return true;
-      }
-
-      // Si es un número falso larguísimo de 18 cifras como 260040000108816558, lo rechaza
-      return false;
-    }
-
-    function verifyEAN13Checksum(code) {
-      const d = code.split('').map(Number);
-      const check = d[12];
-      let sum = 0;
-      for (let i = 0; i < 12; i++) {
-        sum += (i % 2 === 0) ? d[i] : d[i] * 3;
-      }
-      const calc = (10 - (sum % 10)) % 10;
-      return calc === check;
-    }
-
-    function verifyEAN8Checksum(code) {
-      const d = code.split('').map(Number);
-      const check = d[7];
-      let sum = 0;
-      for (let i = 0; i < 7; i++) {
-        sum += (i % 2 === 0) ? d[i] * 3 : d[i];
-      }
-      const calc = (10 - (sum % 10)) % 10;
-      return calc === check;
-    }
-
-    function notifySuccess() {
-      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-      playBeep(880, 0.12);
-    }
-
-    function notifyNotFound() {
-      if (navigator.vibrate) navigator.vibrate(250);
-      playBeep(320, 0.25);
-    }
-
-    function playBeep(freq, duration) {
+    function playBeep(freq = 880, duration = 0.12) {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = ctx.createOscillator();
@@ -567,311 +424,105 @@
       } catch (e) {}
     }
 
-    // INICIAR CÁMARA (Exclusivamente formatos de tienda comercial, SIN ITF)
+    function notifySuccess() {
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+      playBeep(880, 0.12);
+    }
+
+    function notifyNotFound() {
+      if (navigator.vibrate) navigator.vibrate(200);
+      playBeep(340, 0.22);
+    }
+
+    // INICIALIZAR Y ARRANCAR MOTOR EXACTO DE PATRIORIGEN
     async function startCamera() {
-      const loadingMsg = document.getElementById('camera-loading-message');
-      const laser = document.getElementById('scanner-laser');
+      const placeholder = document.getElementById('camera-placeholder');
+      const statusBadge = document.getElementById('status-badge');
+
+      placeholder.classList.remove('hidden');
 
       try {
-        loadingMsg.classList.remove('hidden');
+        if (!codeReader) {
+          // Configuración de formatos comerciales idéntica a Patriorigen
+          const hints = new Map();
+          hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+            ZXing.BarcodeFormat.EAN_13,
+            ZXing.BarcodeFormat.EAN_8,
+            ZXing.BarcodeFormat.UPC_A,
+            ZXing.BarcodeFormat.UPC_E
+          ]);
+          hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
 
-        // FORMATOS COMERCIALES LIMPIOS (Eliminado ITF que causaba los números falsos)
-        const retailFormats = [
-          Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.EAN_8,
-          Html5QrcodeSupportedFormats.UPC_A,
-          Html5QrcodeSupportedFormats.UPC_E,
-          Html5QrcodeSupportedFormats.CODE_128
-        ];
-
-        if (!html5QrCode) {
-          html5QrCode = new Html5Qrcode("reader", {
-            formatsToSupport: retailFormats,
-            verbose: false,
-            experimentalFeatures: { useBarCodeDetectorIfSupported: true }
-          });
+          codeReader = new ZXing.BrowserMultiFormatReader(hints);
         }
 
-        if (cameraRunning) {
-          await html5QrCode.stop();
-          cameraRunning = false;
+        // Buscar cámara trasera en el dispositivo
+        const videoInputDevices = await codeReader.listVideoInputDevices();
+        let selectedDeviceId = undefined;
+
+        if (videoInputDevices && videoInputDevices.length > 0) {
+          const backCam = videoInputDevices.find(dev => 
+            dev.label.toLowerCase().includes('back') || 
+            dev.label.toLowerCase().includes('trasera') || 
+            dev.label.toLowerCase().includes('environment')
+          );
+          selectedDeviceId = backCam ? backCam.deviceId : videoInputDevices[videoInputDevices.length - 1].deviceId;
         }
 
-        const qrConfig = {
-          fps: 15,
-          qrbox: (w, h) => ({ width: Math.floor(w * 0.85), height: Math.floor(h * 0.55) }),
-          aspectRatio: 1.777778
-        };
+        // Conectar decodificador directo al elemento <video id="video">
+        codeReader.decodeFromVideoDevice(selectedDeviceId, 'video', (result, err) => {
+          if (result) {
+            const code = result.getText();
+            onBarcodeScanned(code);
+          }
+          if (err && !(err instanceof ZXing.NotFoundException)) {
+            // Ignorar fotogramas sin código (comportamiento normal continuo)
+          }
+        });
 
-        await html5QrCode.start(
-          { facingMode: "environment" },
-          qrConfig,
-          onLiveBarcodeScanned,
-          (err) => {}
-        );
-
-        cameraRunning = true;
-        loadingMsg.classList.add('hidden');
-        laser.classList.remove('hidden');
-        setZoom(currentZoomLevel);
+        isScanning = true;
+        placeholder.classList.add('hidden');
+        statusBadge.innerHTML = `<i class="fa-solid fa-camera"></i> Escaneando`;
+        statusBadge.className = "text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold flex items-center gap-1";
       } catch (err) {
         console.error("Error cámara:", err);
-        loadingMsg.innerHTML = `
-          <i class="fa-solid fa-triangle-exclamation text-amber-500 text-2xl mb-1"></i>
+        placeholder.innerHTML = `
+          <i class="fa-solid fa-triangle-exclamation text-amber-500 text-3xl mb-2"></i>
           <p class="text-xs font-bold text-white">No se pudo acceder a la cámara</p>
-          <p class="text-[10px] text-slate-300 mt-1 max-w-xs">${err.message || err}</p>
-          <button onclick="startCamera()" class="mt-2 bg-rose-600 hover:bg-rose-700 text-white text-xs px-3 py-1 rounded-lg font-bold">
+          <p class="text-[10px] text-slate-400 mt-1">${err.message || err}</p>
+          <button onclick="startCamera()" class="mt-3 bg-rose-600 hover:bg-rose-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold">
             Reintentar
           </button>
         `;
       }
     }
 
-    // LECTURA EN VIVO: Sólo acepta códigos comerciales válidos
-    function onLiveBarcodeScanned(decodedText) {
-      if (!isValidRetailBarcode(decodedText)) {
-        // Ignora silenciosamente lecturas erróneas de texto del bote
-        return;
-      }
-      const now = Date.now();
-      if (decodedText === lastScannedCode && (now - lastScanTime < 2500)) return;
-      lastScanTime = now;
-      lastScannedCode = decodedText;
-      processBarcode(decodedText);
-    }
-
-    async function stopCamera() {
-      if (html5QrCode && cameraRunning) {
-        await html5QrCode.stop();
-        cameraRunning = false;
-        document.getElementById('scanner-laser').classList.add('hidden');
+    function stopCamera() {
+      if (codeReader) {
+        codeReader.reset();
+        isScanning = false;
       }
     }
 
     function toggleCamera() {
-      if (cameraRunning) stopCamera();
-      else startCamera();
+      stopCamera();
+      setTimeout(startCamera, 300);
     }
 
-    function setZoom(level) {
-      currentZoomLevel = level;
-      ['zoom-btn-1', 'zoom-btn-2', 'zoom-btn-3'].forEach(id => {
-        const btn = document.getElementById(id);
-        btn.classList.remove('bg-rose-600', 'text-white');
-        btn.classList.add('text-white/80');
-      });
-
-      if (level === 1.0) document.getElementById('zoom-btn-1').classList.add('bg-rose-600', 'text-white');
-      else if (level <= 2.0) document.getElementById('zoom-btn-2').classList.add('bg-rose-600', 'text-white');
-      else document.getElementById('zoom-btn-3').classList.add('bg-rose-600', 'text-white');
-
-      try {
-        const videoElem = document.querySelector('#reader video');
-        if (videoElem && videoElem.srcObject) {
-          const track = videoElem.srcObject.getVideoTracks()[0];
-          const caps = track.getCapabilities ? track.getCapabilities() : {};
-          if (caps.zoom) {
-            const targetZoom = Math.min(Math.max(level, caps.zoom.min || 1), caps.zoom.max || 5);
-            track.applyConstraints({ advanced: [{ zoom: targetZoom }] });
-          }
-        }
-      } catch (e) {}
-
-      const video = document.querySelector('#reader video');
-      if (video) video.style.transform = `scale(${level})`;
+    function resumeScanning() {
+      document.getElementById('card-found').classList.add('hidden');
+      document.getElementById('card-not-found').classList.add('hidden');
+      if (!isScanning) startCamera();
     }
 
-    async function toggleTorch() {
-      try {
-        const videoElem = document.querySelector('#reader video');
-        if (!videoElem || !videoElem.srcObject) return;
-        const track = videoElem.srcObject.getVideoTracks()[0];
-        const caps = track.getCapabilities ? track.getCapabilities() : {};
-        if (!caps.torch) return alert("Linterna no disponible en este dispositivo.");
-        torchActive = !torchActive;
-        await track.applyConstraints({ advanced: [{ torch: torchActive }] });
-        document.getElementById('torch-text').textContent = torchActive ? "Apagar" : "Luz";
-      } catch (err) {
-        alert("Error al activar luz.");
-      }
-    }
+    // LECTURA EXITOSA
+    function onBarcodeScanned(code) {
+      const now = Date.now();
+      if (code === lastScannedCode && (now - lastScanTime < 3000)) return;
+      lastScanTime = now;
+      lastScannedCode = code;
 
-    // CAPTURAR Y PROCESAR CON FILTROS
-    async function captureAndProcessWithContrast() {
-      const video = document.querySelector('#reader video');
-      if (!video) return alert("Cámara no activa.");
-
-      const vw = video.videoWidth || 1280;
-      const vh = video.videoHeight || 720;
-
-      // Recortar la zona central donde está el código
-      const cropWidth = Math.floor(vw * 0.85);
-      const cropHeight = Math.floor(vh * 0.50);
-      const cropX = Math.floor((vw - cropWidth) / 2);
-      const cropY = Math.floor((vh - cropHeight) / 2);
-
-      rawCapturedCanvas = document.createElement('canvas');
-      rawCapturedCanvas.width = cropWidth;
-      rawCapturedCanvas.height = cropHeight;
-      const rawCtx = rawCapturedCanvas.getContext('2d');
-      rawCtx.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
-
-      document.getElementById('modal-capture-review').classList.remove('hidden');
-      document.getElementById('capture-code-input').value = '';
-      
-      const badge = document.getElementById('capture-status-badge');
-      const badgeIcon = document.getElementById('capture-status-icon');
-      const badgeText = document.getElementById('capture-status-text');
-
-      badge.className = "p-2 rounded-xl text-xs flex items-center gap-2 font-medium bg-slate-100 text-slate-700 border border-slate-200";
-      badgeIcon.className = "fa-solid fa-circle-notch fa-spin text-rose-500";
-      badgeText.textContent = "Analizando código comercial EAN...";
-
-      const filterSequence = ['contrast', 'normal', 'bw', 'invert'];
-      let detectedCode = null;
-      let winningFilter = 'contrast';
-
-      for (const filt of filterSequence) {
-        const testCanvas = getFilteredCanvas(rawCapturedCanvas, filt);
-        const candidate = await scanCanvas(testCanvas);
-        if (candidate && isValidRetailBarcode(candidate)) {
-          detectedCode = candidate;
-          winningFilter = filt;
-          break;
-        }
-      }
-
-      applyFilterAndScan(winningFilter, detectedCode);
-    }
-
-    async function applyFilterAndScan(filterType, alreadyDecoded = null) {
-      if (!rawCapturedCanvas) return;
-
-      ['btn-filt-normal', 'btn-filt-contrast', 'btn-filt-bw', 'btn-filt-invert'].forEach(id => {
-        const b = document.getElementById(id);
-        b.className = "py-1.5 px-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700";
-      });
-      const activeBtn = document.getElementById(`btn-filt-${filterType}`);
-      if (activeBtn) activeBtn.className = "py-1.5 px-1 bg-rose-600 text-white rounded-lg font-bold shadow-sm";
-
-      const displayCanvas = document.getElementById('capture-processed-canvas');
-      const processed = getFilteredCanvas(rawCapturedCanvas, filterType);
-      displayCanvas.width = processed.width;
-      displayCanvas.height = processed.height;
-      const ctx = displayCanvas.getContext('2d');
-      ctx.drawImage(processed, 0, 0);
-
-      const input = document.getElementById('capture-code-input');
-      const badge = document.getElementById('capture-status-badge');
-      const badgeIcon = document.getElementById('capture-status-icon');
-      const badgeText = document.getElementById('capture-status-text');
-
-      let code = alreadyDecoded;
-      if (!code) {
-        badgeIcon.className = "fa-solid fa-circle-notch fa-spin text-rose-500";
-        badgeText.textContent = `Analizando filtro: ${filterType}...`;
-        const candidate = await scanCanvas(processed);
-        if (candidate && isValidRetailBarcode(candidate)) {
-          code = candidate;
-        }
-      }
-
-      if (code) {
-        notifySuccess();
-        input.value = code;
-        badge.className = "p-2 rounded-xl text-xs flex items-center gap-2 font-medium bg-emerald-50 text-emerald-800 border border-emerald-200";
-        badgeIcon.className = "fa-solid fa-circle-check text-emerald-600";
-        badgeText.textContent = `¡Código EAN detectado: ${code}!`;
-      } else {
-        badge.className = "p-2 rounded-xl text-xs flex items-center gap-2 font-medium bg-amber-50 text-amber-800 border border-amber-200";
-        badgeIcon.className = "fa-solid fa-triangle-exclamation text-amber-600";
-        badgeText.textContent = "No detectado. Mira la foto e introduce los números.";
-      }
-    }
-
-    async function scanCanvas(canvas) {
-      if ('BarcodeDetector' in window) {
-        try {
-          const detector = new BarcodeDetector({ 
-            formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'] 
-          });
-          const codes = await detector.detect(canvas);
-          if (codes && codes.length > 0) return codes[0].rawValue;
-        } catch (e) {}
-      }
-
-      try {
-        return await new Promise((resolve) => {
-          canvas.toBlob(async (blob) => {
-            if (!blob) return resolve(null);
-            const file = new File([blob], "c.jpg", { type: "image/jpeg" });
-            try {
-              const res = await html5QrCode.scanFile(file, true);
-              resolve(res);
-            } catch (err) {
-              resolve(null);
-            }
-          }, 'image/jpeg', 0.95);
-        });
-      } catch (err) {
-        return null;
-      }
-    }
-
-    function getFilteredCanvas(srcCanvas, type) {
-      const c = document.createElement('canvas');
-      c.width = srcCanvas.width;
-      c.height = srcCanvas.height;
-      const ctx = c.getContext('2d');
-      ctx.drawImage(srcCanvas, 0, 0);
-
-      if (type === 'normal') return c;
-
-      const imgData = ctx.getImageData(0, 0, c.width, c.height);
-      const d = imgData.data;
-
-      if (type === 'contrast') {
-        const factor = (259 * (180 + 255)) / (255 * (259 - 180));
-        for (let i = 0; i < d.length; i += 4) {
-          let gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
-          gray = factor * (gray - 128) + 128;
-          gray = Math.min(255, Math.max(0, gray));
-          d[i] = d[i+1] = d[i+2] = gray;
-        }
-      } else if (type === 'bw') {
-        for (let i = 0; i < d.length; i += 4) {
-          const gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
-          const val = gray > 130 ? 255 : 0;
-          d[i] = d[i+1] = d[i+2] = val;
-        }
-      } else if (type === 'invert') {
-        for (let i = 0; i < d.length; i += 4) {
-          const gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
-          d[i] = d[i+1] = d[i+2] = 255 - gray;
-        }
-      }
-
-      ctx.putImageData(imgData, 0, 0);
-      return c;
-    }
-
-    function closeCaptureReviewModal() {
-      document.getElementById('modal-capture-review').classList.add('hidden');
-    }
-
-    function submitCapturedCode() {
-      const code = document.getElementById('capture-code-input').value.trim();
-      if (!code) return alert("Por favor introduce los números del código.");
-      closeCaptureReviewModal();
       processBarcode(code);
-    }
-
-    function editNotFoundCode() {
-      const current = document.getElementById('not-found-code').textContent;
-      const nuevo = prompt("Introduce o corrige el código de barras:", current);
-      if (nuevo && nuevo.trim()) {
-        processBarcode(nuevo.trim());
-      }
     }
 
     function handleManualSearch() {
@@ -880,7 +531,7 @@
       processBarcode(val);
     }
 
-    // PROCESAR PRODUCTO ENCONTRADO O NUEVO
+    // PROCESAR PRODUCTO
     function processBarcode(code) {
       const product = products[code];
       const cardFound = document.getElementById('card-found');
@@ -928,6 +579,7 @@
       return html || '<div class="text-slate-400 italic">Sin atributos adicionales</div>';
     }
 
+    // FORMULARIO DINÁMICO
     function handleCategoryChange() {
       const cat = document.getElementById('input-category').value;
       document.getElementById('field-encurtido-unidades').classList.add('hidden');
@@ -992,7 +644,7 @@
       const category = document.getElementById('input-category').value;
       const price = parseFloat(document.getElementById('input-price').value);
 
-      if (!barcode || !name || !category || isNaN(price)) return alert("Completa los campos requeridos.");
+      if (!barcode || !name || !category || isNaN(price)) return alert("Por favor completa los campos requeridos.");
 
       const prod = { barcode, name, category, price, updatedAt: new Date().toISOString() };
       if (category === 'encurtido') prod.unidades = document.getElementById('input-unidades').value.trim();
@@ -1018,7 +670,7 @@
       processBarcode(barcode);
     }
 
-    // PEDIDOS
+    // GESTIÓN DE PEDIDO
     function promptAddToOrderFromFound() {
       const barcode = document.getElementById('found-barcode').textContent;
       addToOrder(barcode, 1);
@@ -1336,7 +988,7 @@
         document.getElementById('view-scanner').classList.remove('hidden');
         document.getElementById('nav-scanner').classList.add('text-rose-600', 'font-bold');
         document.getElementById('nav-scanner').classList.remove('text-slate-400');
-        if (!cameraRunning) startCamera();
+        if (!isScanning) startCamera();
       } else {
         stopCamera();
         if (viewName === 'form') document.getElementById('view-form').classList.remove('hidden');
