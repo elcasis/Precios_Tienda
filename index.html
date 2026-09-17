@@ -8,11 +8,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Librería Html5Qrcode -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <!-- FontAwesome Icons -->
+  <!-- Iconos FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
-    /* Láser de escaneo */
     @keyframes laser-scan {
       0% { top: 15%; opacity: 0.9; }
       50% { top: 85%; opacity: 1; }
@@ -20,12 +19,12 @@
     }
     .scanner-laser {
       position: absolute;
-      left: 8%;
-      right: 8%;
+      left: 10%;
+      right: 10%;
       height: 2px;
-      background: #ef4444;
-      box-shadow: 0 0 10px 2px rgba(239, 68, 68, 0.9);
-      animation: laser-scan 1.6s infinite ease-in-out;
+      background: #22c55e;
+      box-shadow: 0 0 10px 2px rgba(34, 197, 94, 0.9);
+      animation: laser-scan 1.5s infinite ease-in-out;
       pointer-events: none;
       z-index: 10;
     }
@@ -60,7 +59,7 @@
         <i class="fa-solid fa-candy-cane text-2xl"></i>
         <div>
           <h1 class="font-black text-lg leading-tight tracking-wide">MI TIENDA</h1>
-          <p class="text-xs text-amber-100">Escáner de Alta Sensibilidad</p>
+          <p class="text-xs text-amber-100">Lector EAN Oficial Retail</p>
         </div>
       </div>
       <div class="flex items-center space-x-2">
@@ -76,12 +75,12 @@
     <!-- ============================================== -->
     <section id="view-scanner" class="space-y-4">
       
-      <!-- CONTENEDOR DE CÁMARA Y CONTROLES -->
+      <!-- CONTENEDOR DE CÁMARA -->
       <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
         
         <div class="flex justify-between items-center mb-2">
           <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm">
-            <i class="fa-solid fa-barcode text-rose-500"></i> Lector de Códigos
+            <i class="fa-solid fa-barcode text-rose-500"></i> Escáner EAN-13 / EAN-8
           </h2>
           <div class="flex items-center gap-1">
             <button id="btn-torch" onclick="toggleTorch()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg font-medium transition flex items-center gap-1">
@@ -105,12 +104,12 @@
             <button onclick="setZoom(2.8)" id="zoom-btn-3" class="px-2 py-0.5 text-xs font-bold rounded text-white/80 hover:text-white transition">3x</button>
           </div>
 
-          <!-- Cuadro de enfoque visual de guía -->
+          <!-- Marco de guía -->
           <div class="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
-            <div class="w-[85%] h-[55%] border-2 border-dashed border-rose-400/70 rounded-lg"></div>
+            <div class="w-[85%] h-[55%] border-2 border-dashed border-emerald-400/80 rounded-lg shadow-sm"></div>
           </div>
 
-          <!-- Pantalla de carga cámara -->
+          <!-- Mensaje de inicio de cámara -->
           <div id="camera-loading-message" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center text-white p-4 text-center z-30">
             <i class="fa-solid fa-circle-notch fa-spin text-3xl text-rose-500 mb-2"></i>
             <p class="text-xs font-semibold">Iniciando cámara trasera...</p>
@@ -125,16 +124,16 @@
         <div class="mt-3">
           <button onclick="captureAndProcessWithContrast()" class="w-full bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 text-white font-bold py-3 px-4 rounded-xl shadow-md flex items-center justify-center gap-2 text-sm active:scale-98 transition">
             <i class="fa-solid fa-wand-magic-sparkles text-lg text-amber-200"></i>
-            <span>Capturar con Auto-Contraste</span>
+            <span>Capturar Foto y Leer Código EAN</span>
           </button>
           <p class="text-[11px] text-slate-400 text-center mt-1">
-            Enfoca el código dentro del recuadro y pulsa este botón para procesar el contraste.
+            Reconoce directamente códigos comerciales españoles (EAN-13) eliminando brillos.
           </p>
         </div>
 
         <!-- Entrada manual -->
         <div class="mt-3 pt-2 border-t border-slate-100 flex gap-2">
-          <input type="text" id="manual-barcode-input" placeholder="O introduce los números manualmente..." class="flex-1 bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500">
+          <input type="text" id="manual-barcode-input" placeholder="O introduce los números manualmente..." class="flex-1 bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500 font-mono">
           <button onclick="handleManualSearch()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold transition">
             Buscar
           </button>
@@ -146,7 +145,7 @@
       <div id="card-found" class="hidden bg-white border-2 border-emerald-500 rounded-2xl p-5 shadow-md animate-fade-in">
         <div class="flex justify-between items-start">
           <span class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider" id="found-category">Categoría</span>
-          <span class="text-xs text-slate-400 font-mono" id="found-barcode">780000000</span>
+          <span class="text-xs text-slate-400 font-mono font-bold" id="found-barcode">780000000</span>
         </div>
         
         <h3 id="found-name" class="text-xl font-black text-slate-800 mt-2">Nombre del Producto</h3>
@@ -175,7 +174,13 @@
           </div>
           <div>
             <h3 class="font-bold text-slate-800 text-lg">Producto no registrado</h3>
-            <p class="text-xs text-slate-500">Código escaneado: <span id="not-found-code" class="font-mono font-bold text-slate-700"></span></p>
+            <div class="flex items-center justify-center gap-2 mt-1">
+              <span class="text-xs text-slate-500">Código:</span>
+              <span id="not-found-code" class="font-mono font-black text-base text-slate-800 bg-slate-100 px-2 py-0.5 rounded-lg"></span>
+              <button onclick="editNotFoundCode()" class="text-rose-600 hover:text-rose-800 text-xs font-bold" title="Corregir código">
+                <i class="fa-solid fa-pen"></i>
+              </button>
+            </div>
           </div>
           <p class="text-sm text-slate-600">¿Quieres añadirlo a tu catálogo ahora?</p>
           <button onclick="openAddProductWithCode()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-amber-500/20 text-sm flex items-center justify-center gap-2">
@@ -206,7 +211,7 @@
           <canvas id="capture-processed-canvas" class="w-full h-full object-contain"></canvas>
         </div>
 
-        <!-- Botones de filtros interactivos para el usuario -->
+        <!-- Botones de filtros -->
         <div>
           <span class="text-[10px] font-bold uppercase text-slate-400 block mb-1">Prueba otro filtro si no lo lee:</span>
           <div class="grid grid-cols-4 gap-1 text-[10px] font-bold">
@@ -220,19 +225,19 @@
         <!-- Estado de detección -->
         <div id="capture-status-badge" class="p-2 rounded-xl text-xs flex items-center gap-2 font-medium bg-slate-100 text-slate-700 border border-slate-200">
           <i id="capture-status-icon" class="fa-solid fa-circle-notch fa-spin text-rose-500"></i>
-          <span id="capture-status-text" class="text-[11px]">Procesando filtros de contraste...</span>
+          <span id="capture-status-text" class="text-[11px]">Buscando código comercial EAN...</span>
         </div>
 
         <!-- Campo de dígitos con teclado numérico -->
         <div>
           <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Números del Código (editable):</label>
           <div class="relative">
-            <input type="text" id="capture-code-input" inputmode="numeric" pattern="[0-9]*" class="w-full bg-slate-50 border-2 border-slate-300 font-mono font-bold text-center text-xl text-slate-800 py-2.5 rounded-xl focus:border-rose-500 outline-none tracking-wider" placeholder="Introduce números">
+            <input type="text" id="capture-code-input" inputmode="numeric" pattern="[0-9]*" class="w-full bg-slate-50 border-2 border-slate-300 font-mono font-bold text-center text-xl text-slate-800 py-2.5 rounded-xl focus:border-rose-500 outline-none tracking-wider" placeholder="Ej: 8423286000342">
             <button onclick="document.getElementById('capture-code-input').value = ''" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600 text-xs">
               <i class="fa-solid fa-circle-xmark text-sm"></i>
             </button>
           </div>
-          <p class="text-[10px] text-slate-400 mt-1">Si falla la lectura automática, mira la foto arriba y teclea los números.</p>
+          <p class="text-[10px] text-slate-400 mt-1">Compara con los números bajo las barras del bote.</p>
         </div>
 
         <!-- Botones de acción -->
@@ -285,14 +290,14 @@
 
           <div>
             <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nombre del Producto *</label>
-            <input type="text" id="input-name" required placeholder="Ej: Bote Pepinillos, Chupa Chups Fresa..." class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-rose-500 outline-none">
+            <input type="text" id="input-name" required placeholder="Ej: Bote Pepinillos 340g, Chupa Chups Fresa..." class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-rose-500 outline-none">
           </div>
 
           <!-- CAMPOS CONDICIONALES -->
           <div id="category-specific-fields" class="space-y-3 bg-amber-50/50 p-3.5 rounded-xl border border-amber-200">
             <div id="field-encurtido-unidades" class="hidden">
               <label class="block text-xs font-bold uppercase text-amber-900 mb-1">Unidades / Formato *</label>
-              <input type="text" id="input-unidades" placeholder="Ej: 12 botes, Lata 500g, Pack 3..." class="w-full bg-white border border-slate-300 text-slate-800 text-sm rounded-xl px-3 py-2">
+              <input type="text" id="input-unidades" placeholder="Ej: Bote 340g, Lata 1kg, Pack de 3..." class="w-full bg-white border border-slate-300 text-slate-800 text-sm rounded-xl px-3 py-2">
             </div>
 
             <div id="field-caramelos" class="hidden space-y-3">
@@ -486,7 +491,57 @@
     let cameraRunning = false;
     let currentZoomLevel = 1.0;
     let torchActive = false;
-    let rawCapturedCanvas = null; // Canvas con la imagen original recortada
+    let rawCapturedCanvas = null;
+    let lastScanTime = 0;
+    let lastScannedCode = null;
+
+    // VALIDACIÓN ESTRICTA DE CÓDIGOS DE BARRAS DE TIENDA (Elimina lecturas fantasma de 18 cifras)
+    function isValidRetailBarcode(code) {
+      if (!code) return false;
+      code = code.trim();
+
+      // EAN-13 (El estándar español y europeo: 13 dígitos con suma de comprobación)
+      if (/^\d{13}$/.test(code)) {
+        return verifyEAN13Checksum(code);
+      }
+      // EAN-8 (Para productos pequeños como chicles y caramelos: 8 dígitos)
+      if (/^\d{8}$/.test(code)) {
+        return verifyEAN8Checksum(code);
+      }
+      // UPC-A (12 dígitos, productos importados)
+      if (/^\d{12}$/.test(code)) {
+        return true;
+      }
+      // Code 128 limpio (máximo 14 caracteres)
+      if (/^[A-Za-z0-9\-_]{4,14}$/.test(code)) {
+        return true;
+      }
+
+      // Si es un número falso larguísimo de 18 cifras como 260040000108816558, lo rechaza
+      return false;
+    }
+
+    function verifyEAN13Checksum(code) {
+      const d = code.split('').map(Number);
+      const check = d[12];
+      let sum = 0;
+      for (let i = 0; i < 12; i++) {
+        sum += (i % 2 === 0) ? d[i] : d[i] * 3;
+      }
+      const calc = (10 - (sum % 10)) % 10;
+      return calc === check;
+    }
+
+    function verifyEAN8Checksum(code) {
+      const d = code.split('').map(Number);
+      const check = d[7];
+      let sum = 0;
+      for (let i = 0; i < 7; i++) {
+        sum += (i % 2 === 0) ? d[i] * 3 : d[i];
+      }
+      const calc = (10 - (sum % 10)) % 10;
+      return calc === check;
+    }
 
     function notifySuccess() {
       if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
@@ -512,7 +567,7 @@
       } catch (e) {}
     }
 
-    // INICIAR CÁMARA
+    // INICIAR CÁMARA (Exclusivamente formatos de tienda comercial, SIN ITF)
     async function startCamera() {
       const loadingMsg = document.getElementById('camera-loading-message');
       const laser = document.getElementById('scanner-laser');
@@ -520,20 +575,18 @@
       try {
         loadingMsg.classList.remove('hidden');
 
-        const formats = [
+        // FORMATOS COMERCIALES LIMPIOS (Eliminado ITF que causaba los números falsos)
+        const retailFormats = [
           Html5QrcodeSupportedFormats.EAN_13,
           Html5QrcodeSupportedFormats.EAN_8,
           Html5QrcodeSupportedFormats.UPC_A,
           Html5QrcodeSupportedFormats.UPC_E,
-          Html5QrcodeSupportedFormats.CODE_128,
-          Html5QrcodeSupportedFormats.CODE_39,
-          Html5QrcodeSupportedFormats.ITF,
-          Html5QrcodeSupportedFormats.QR_CODE
+          Html5QrcodeSupportedFormats.CODE_128
         ];
 
         if (!html5QrCode) {
           html5QrCode = new Html5Qrcode("reader", {
-            formatsToSupport: formats,
+            formatsToSupport: retailFormats,
             verbose: false,
             experimentalFeatures: { useBarCodeDetectorIfSupported: true }
           });
@@ -553,7 +606,7 @@
         await html5QrCode.start(
           { facingMode: "environment" },
           qrConfig,
-          (decodedText) => processBarcode(decodedText),
+          onLiveBarcodeScanned,
           (err) => {}
         );
 
@@ -572,6 +625,19 @@
           </button>
         `;
       }
+    }
+
+    // LECTURA EN VIVO: Sólo acepta códigos comerciales válidos
+    function onLiveBarcodeScanned(decodedText) {
+      if (!isValidRetailBarcode(decodedText)) {
+        // Ignora silenciosamente lecturas erróneas de texto del bote
+        return;
+      }
+      const now = Date.now();
+      if (decodedText === lastScannedCode && (now - lastScanTime < 2500)) return;
+      lastScanTime = now;
+      lastScannedCode = decodedText;
+      processBarcode(decodedText);
     }
 
     async function stopCamera() {
@@ -630,9 +696,7 @@
       }
     }
 
-    // =======================================================
-    // MOTOR AVANZADO DE IMAGEN: AUTO-CONTRASTE & MULTI-FILTRO
-    // =======================================================
+    // CAPTURAR Y PROCESAR CON FILTROS
     async function captureAndProcessWithContrast() {
       const video = document.querySelector('#reader video');
       if (!video) return alert("Cámara no activa.");
@@ -640,7 +704,7 @@
       const vw = video.videoWidth || 1280;
       const vh = video.videoHeight || 720;
 
-      // 1. Recortar la zona central (ROI) donde está el código para eliminar ruido del envoltorio
+      // Recortar la zona central donde está el código
       const cropWidth = Math.floor(vw * 0.85);
       const cropHeight = Math.floor(vh * 0.50);
       const cropX = Math.floor((vw - cropWidth) / 2);
@@ -652,7 +716,6 @@
       const rawCtx = rawCapturedCanvas.getContext('2d');
       rawCtx.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
 
-      // Abrir modal de revisión
       document.getElementById('modal-capture-review').classList.remove('hidden');
       document.getElementById('capture-code-input').value = '';
       
@@ -662,31 +725,28 @@
 
       badge.className = "p-2 rounded-xl text-xs flex items-center gap-2 font-medium bg-slate-100 text-slate-700 border border-slate-200";
       badgeIcon.className = "fa-solid fa-circle-notch fa-spin text-rose-500";
-      badgeText.textContent = "Probando filtros de contraste...";
+      badgeText.textContent = "Analizando código comercial EAN...";
 
-      // 2. Ejecutar prueba automática de filtros (Contraste alto, Blanco/Negro puro, Invertido)
-      const filterSequence = ['contrast', 'bw', 'normal', 'invert'];
+      const filterSequence = ['contrast', 'normal', 'bw', 'invert'];
       let detectedCode = null;
       let winningFilter = 'contrast';
 
       for (const filt of filterSequence) {
         const testCanvas = getFilteredCanvas(rawCapturedCanvas, filt);
-        detectedCode = await scanCanvas(testCanvas);
-        if (detectedCode) {
+        const candidate = await scanCanvas(testCanvas);
+        if (candidate && isValidRetailBarcode(candidate)) {
+          detectedCode = candidate;
           winningFilter = filt;
           break;
         }
       }
 
-      // 3. Mostrar en pantalla el filtro ganador (o Alto Contraste por defecto)
       applyFilterAndScan(winningFilter, detectedCode);
     }
 
-    // APLICAR FILTRO ESPECÍFICO Y MOSTRAR RESULTADO
     async function applyFilterAndScan(filterType, alreadyDecoded = null) {
       if (!rawCapturedCanvas) return;
 
-      // Actualizar estilo botones de filtro
       ['btn-filt-normal', 'btn-filt-contrast', 'btn-filt-bw', 'btn-filt-invert'].forEach(id => {
         const b = document.getElementById(id);
         b.className = "py-1.5 px-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700";
@@ -694,7 +754,6 @@
       const activeBtn = document.getElementById(`btn-filt-${filterType}`);
       if (activeBtn) activeBtn.className = "py-1.5 px-1 bg-rose-600 text-white rounded-lg font-bold shadow-sm";
 
-      // Renderizar imagen filtrada en el canvas visible
       const displayCanvas = document.getElementById('capture-processed-canvas');
       const processed = getFilteredCanvas(rawCapturedCanvas, filterType);
       displayCanvas.width = processed.width;
@@ -710,8 +769,11 @@
       let code = alreadyDecoded;
       if (!code) {
         badgeIcon.className = "fa-solid fa-circle-notch fa-spin text-rose-500";
-        badgeText.textContent = `Analizando con filtro: ${filterType}...`;
-        code = await scanCanvas(processed);
+        badgeText.textContent = `Analizando filtro: ${filterType}...`;
+        const candidate = await scanCanvas(processed);
+        if (candidate && isValidRetailBarcode(candidate)) {
+          code = candidate;
+        }
       }
 
       if (code) {
@@ -719,28 +781,25 @@
         input.value = code;
         badge.className = "p-2 rounded-xl text-xs flex items-center gap-2 font-medium bg-emerald-50 text-emerald-800 border border-emerald-200";
         badgeIcon.className = "fa-solid fa-circle-check text-emerald-600";
-        badgeText.textContent = "¡Código detectado con éxito!";
+        badgeText.textContent = `¡Código EAN detectado: ${code}!`;
       } else {
         badge.className = "p-2 rounded-xl text-xs flex items-center gap-2 font-medium bg-amber-50 text-amber-800 border border-amber-200";
         badgeIcon.className = "fa-solid fa-triangle-exclamation text-amber-600";
-        badgeText.textContent = "No detectado. Pulsa otro filtro o escribe los números.";
+        badgeText.textContent = "No detectado. Mira la foto e introduce los números.";
       }
     }
 
-    // DECODIFICADOR NATIVO (BarcodeDetector) + FALLBACK ZXING
     async function scanCanvas(canvas) {
-      // 1. Intentar con BarcodeDetector nativo por hardware (Super rápido en Android/iOS)
       if ('BarcodeDetector' in window) {
         try {
           const detector = new BarcodeDetector({ 
-            formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf'] 
+            formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'] 
           });
           const codes = await detector.detect(canvas);
           if (codes && codes.length > 0) return codes[0].rawValue;
         } catch (e) {}
       }
 
-      // 2. Fallback con Html5Qrcode
       try {
         return await new Promise((resolve) => {
           canvas.toBlob(async (blob) => {
@@ -759,7 +818,6 @@
       }
     }
 
-    // ALGORITMOS DE FILTRADO DE IMAGEN
     function getFilteredCanvas(srcCanvas, type) {
       const c = document.createElement('canvas');
       c.width = srcCanvas.width;
@@ -773,7 +831,6 @@
       const d = imgData.data;
 
       if (type === 'contrast') {
-        // Escala de grises con contraste extremo (+70%) para que las barras negras resalten sobre plástico
         const factor = (259 * (180 + 255)) / (255 * (259 - 180));
         for (let i = 0; i < d.length; i += 4) {
           let gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
@@ -782,18 +839,15 @@
           d[i] = d[i+1] = d[i+2] = gray;
         }
       } else if (type === 'bw') {
-        // Binarización pura: elimina cualquier color o brillo del envoltorio
         for (let i = 0; i < d.length; i += 4) {
           const gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
           const val = gray > 130 ? 255 : 0;
           d[i] = d[i+1] = d[i+2] = val;
         }
       } else if (type === 'invert') {
-        // Invertir colores (para barras blancas sobre fondo oscuro)
         for (let i = 0; i < d.length; i += 4) {
           const gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
-          const inv = 255 - gray;
-          d[i] = d[i+1] = d[i+2] = inv;
+          d[i] = d[i+1] = d[i+2] = 255 - gray;
         }
       }
 
@@ -812,13 +866,21 @@
       processBarcode(code);
     }
 
+    function editNotFoundCode() {
+      const current = document.getElementById('not-found-code').textContent;
+      const nuevo = prompt("Introduce o corrige el código de barras:", current);
+      if (nuevo && nuevo.trim()) {
+        processBarcode(nuevo.trim());
+      }
+    }
+
     function handleManualSearch() {
       const val = document.getElementById('manual-barcode-input').value.trim();
       if (!val) return;
       processBarcode(val);
     }
 
-    // PROCESAR PRODUCTO ENCONTRADO / NUEVO
+    // PROCESAR PRODUCTO ENCONTRADO O NUEVO
     function processBarcode(code) {
       const product = products[code];
       const cardFound = document.getElementById('card-found');
@@ -866,7 +928,6 @@
       return html || '<div class="text-slate-400 italic">Sin atributos adicionales</div>';
     }
 
-    // FORMULARIO DINÁMICO
     function handleCategoryChange() {
       const cat = document.getElementById('input-category').value;
       document.getElementById('field-encurtido-unidades').classList.add('hidden');
