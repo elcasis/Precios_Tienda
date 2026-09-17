@@ -8,29 +8,36 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Librería Html5Qrcode -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <!-- Iconos FontAwesome -->
+  <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
-    /* Animación del láser rojo de escaneo */
+    /* Láser de escaneo animado */
     @keyframes laser-scan {
-      0% { top: 10%; opacity: 0.8; }
-      50% { top: 90%; opacity: 1; }
-      100% { top: 10%; opacity: 0.8; }
+      0% { top: 12%; opacity: 0.9; }
+      50% { top: 88%; opacity: 1; }
+      100% { top: 12%; opacity: 0.9; }
     }
     .scanner-laser {
       position: absolute;
-      left: 5%;
-      right: 5%;
+      left: 6%;
+      right: 6%;
       height: 2px;
       background: #ef4444;
-      box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.8);
-      animation: laser-scan 2s infinite ease-in-out;
+      box-shadow: 0 0 10px 2px rgba(239, 68, 68, 0.85);
+      animation: laser-scan 1.8s infinite ease-in-out;
       pointer-events: none;
       z-index: 10;
     }
 
-    /* Estilos de impresión */
+    /* Zoom de vídeo */
+    #reader video {
+      transition: transform 0.2s ease-out;
+      transform-origin: center center;
+      object-fit: cover !important;
+    }
+
+    /* Estilos para impresión limpia */
     @media print {
       body * { visibility: hidden; }
       #print-area, #print-area * { visibility: visible; }
@@ -64,17 +71,7 @@
     </div>
   </header>
 
-  <!-- AVISO DE PROTOCOLO LOCAL (Si no se abre en HTTPS) -->
-  <div id="protocol-warning" class="hidden max-w-md mx-auto mx-4 mt-3 bg-amber-50 border-l-4 border-amber-500 p-3 rounded-r-xl shadow-sm text-xs text-amber-900">
-    <p class="font-bold flex items-center gap-1">
-      <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Estás abriendo el archivo localmente (file://)
-    </p>
-    <p class="mt-1 text-[11px] leading-relaxed">
-      Para que los móviles permitan usar la cámara en directo, la app debe estar subida a <strong>GitHub Pages</strong> (con <code>https://</code>). Mientras tanto, puedes usar la opción de <em>"Foto/Archivo"</em> o la <em>búsqueda manual</em>.
-    </p>
-  </div>
-
-  <!-- CONTENIDO PRINCIPAL -->
+  <!-- CONTENEDOR PRINCIPAL -->
   <main class="max-w-md mx-auto p-4">
 
     <!-- ============================================== -->
@@ -82,53 +79,70 @@
     <!-- ============================================== -->
     <section id="view-scanner" class="space-y-4">
       
-      <!-- CONTENEDOR DE CÁMARA -->
+      <!-- CONTENEDOR DE CÁMARA Y CONTROLES -->
       <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
-        <div class="flex justify-between items-center mb-3">
+        
+        <!-- Barra de herramientas superior de la cámara -->
+        <div class="flex justify-between items-center mb-2">
           <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm">
             <i class="fa-solid fa-barcode text-rose-500"></i> Lector de Códigos
           </h2>
           <div class="flex items-center gap-1">
-            <button id="btn-camera-toggle" onclick="toggleCamera()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg font-medium transition">
-              <i class="fa-solid fa-camera"></i> <span id="camera-btn-text">Reiniciar Cámara</span>
+            <!-- Botón Linterna (si el hardware lo soporta) -->
+            <button id="btn-torch" onclick="toggleTorch()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg font-medium transition flex items-center gap-1" title="Encender Linterna">
+              <i class="fa-regular fa-lightbulb"></i> <span id="torch-text" class="text-[11px]">Luz</span>
+            </button>
+            <!-- Reiniciar / Pausar -->
+            <button onclick="toggleCamera()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1.5 rounded-lg font-medium transition" title="Alternar cámara">
+              <i class="fa-solid fa-power-off"></i>
             </button>
           </div>
         </div>
 
-        <!-- Visor del escáner con marco -->
-        <div class="overflow-hidden rounded-xl bg-black aspect-video relative flex items-center justify-center border border-slate-800">
+        <!-- Visor del escáner -->
+        <div class="overflow-hidden rounded-xl bg-black aspect-video relative flex items-center justify-center border border-slate-800 shadow-inner">
           <div id="reader" class="w-full h-full"></div>
           
-          <!-- Láser animado sobre la zona de lectura -->
+          <!-- Línea láser animada -->
           <div id="scanner-laser" class="scanner-laser hidden"></div>
 
-          <!-- Mensaje de estado cuando no ha iniciado -->
-          <div id="camera-loading-message" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center text-white p-4 text-center z-20">
+          <!-- Selector flotante de ZOOM sobre la cámara -->
+          <div class="absolute top-2 right-2 flex bg-black/60 backdrop-blur rounded-lg p-0.5 z-20 space-x-0.5 border border-white/20">
+            <button onclick="setZoom(1.0)" id="zoom-btn-1" class="px-2 py-0.5 text-xs font-bold rounded text-white bg-rose-600 transition">1x</button>
+            <button onclick="setZoom(1.8)" id="zoom-btn-2" class="px-2 py-0.5 text-xs font-bold rounded text-white/80 hover:text-white transition">2x</button>
+            <button onclick="setZoom(2.8)" id="zoom-btn-3" class="px-2 py-0.5 text-xs font-bold rounded text-white/80 hover:text-white transition">3x</button>
+          </div>
+
+          <!-- Mensaje de inicio de cámara -->
+          <div id="camera-loading-message" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center text-white p-4 text-center z-30">
             <i class="fa-solid fa-circle-notch fa-spin text-3xl text-rose-500 mb-2"></i>
             <p class="text-xs font-semibold">Iniciando cámara trasera...</p>
-            <p class="text-[10px] text-slate-400 mt-1">Asegúrate de aceptar el permiso de cámara</p>
+            <p class="text-[10px] text-slate-400 mt-1">Acepta el permiso si te lo pide el navegador</p>
             <button onclick="startCamera()" class="mt-3 bg-rose-600 hover:bg-rose-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold">
-              Pulsa aquí si no arranca
+              Iniciar Manualmente
             </button>
           </div>
         </div>
 
-        <!-- Alternativa para escanear desde imagen/archivo -->
-        <div class="mt-3 flex justify-between items-center text-xs pt-2 border-t border-slate-100">
-          <label class="cursor-pointer text-rose-600 hover:text-rose-700 font-semibold flex items-center gap-1">
-            <i class="fa-solid fa-image"></i> Escanear desde foto / galería
-            <input type="file" id="file-barcode-input" accept="image/*" capture="environment" onchange="scanFromImage(event)" class="hidden">
-          </label>
-          <span id="scan-status-pill" class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-medium">Activo</span>
+        <!-- BOTÓN PRINCIPAL: CAPTURAR Y VERIFICAR NÚMEROS -->
+        <div class="mt-3">
+          <button onclick="captureAndReviewCode()" class="w-full bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 text-white font-bold py-3 px-4 rounded-xl shadow-md flex items-center justify-center gap-2 text-sm transition transform active:scale-98">
+            <i class="fa-solid fa-camera-retro text-lg"></i>
+            <span>Capturar Foto y Leer Números</span>
+          </button>
+          <p class="text-[11px] text-slate-400 text-center mt-1">
+            Ideal para códigos pequeños: congela la imagen y te permite corregir los números.
+          </p>
         </div>
 
-        <!-- Entrada manual de código -->
-        <div class="mt-3 pt-2 flex gap-2">
-          <input type="text" id="manual-barcode-input" placeholder="O teclea el código de barras..." class="flex-1 bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500">
+        <!-- Entrada manual de código rápida -->
+        <div class="mt-3 pt-2 border-t border-slate-100 flex gap-2">
+          <input type="text" id="manual-barcode-input" placeholder="O teclea el código aquí..." class="flex-1 bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500">
           <button onclick="handleManualSearch()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold transition">
             Buscar
           </button>
         </div>
+
       </div>
 
       <!-- TARJETA: PRODUCTO ENCONTRADO -->
@@ -140,12 +154,10 @@
         
         <h3 id="found-name" class="text-xl font-black text-slate-800 mt-2">Nombre del Producto</h3>
         
-        <div id="found-details" class="mt-2 text-xs text-slate-600 space-y-1 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-          <!-- Detalles según categoría -->
-        </div>
+        <div id="found-details" class="mt-2 text-xs text-slate-600 space-y-1 bg-slate-50 p-2.5 rounded-lg border border-slate-200"></div>
 
         <div class="mt-4 flex items-baseline justify-between">
-          <span class="text-xs text-slate-500 font-medium">Precio:</span>
+          <span class="text-xs text-slate-500 font-medium">Precio de venta:</span>
           <span id="found-price" class="text-3xl font-black text-emerald-600">0.00 €</span>
         </div>
 
@@ -177,6 +189,57 @@
       </div>
 
     </section>
+
+    <!-- ============================================== -->
+    <!-- MODAL DE CAPTURA Y CORRECCIÓN DE NÚMEROS -->
+    <!-- ============================================== -->
+    <div id="modal-capture-review" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-sm rounded-2xl p-5 shadow-2xl border border-slate-200 space-y-4">
+        
+        <div class="flex justify-between items-center border-b pb-2">
+          <h3 class="font-black text-slate-800 text-sm flex items-center gap-2">
+            <i class="fa-solid fa-magnifying-glass text-rose-500"></i> Verificar Código
+          </h3>
+          <button onclick="closeCaptureReviewModal()" class="text-slate-400 hover:text-slate-600 text-lg">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <!-- Foto congelada del código -->
+        <div class="rounded-xl overflow-hidden bg-black border border-slate-300 relative aspect-video flex items-center justify-center">
+          <img id="capture-preview-img" class="w-full h-full object-contain" alt="Captura del código">
+        </div>
+
+        <!-- Estado del detector -->
+        <div id="capture-status-badge" class="p-2 rounded-xl text-xs flex items-center gap-2 font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
+          <i id="capture-status-icon" class="fa-solid fa-circle-check text-emerald-600"></i>
+          <span id="capture-status-text">Código detectado. Revisa si es correcto.</span>
+        </div>
+
+        <!-- Campo de texto editable con teclado numérico -->
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Números del Código (editable):</label>
+          <div class="relative">
+            <input type="text" id="capture-code-input" inputmode="numeric" pattern="[0-9]*" class="w-full bg-slate-50 border-2 border-slate-300 font-mono font-bold text-center text-xl text-slate-800 py-3 rounded-xl focus:border-rose-500 outline-none tracking-widest" placeholder="Introduce números">
+            <button onclick="document.getElementById('capture-code-input').value = ''" class="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600 text-xs">
+              <i class="fa-solid fa-circle-xmark text-sm"></i>
+            </button>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-1">Compara los números con los impresos bajo las barras del envoltorio.</p>
+        </div>
+
+        <!-- Botones del modal -->
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button onclick="closeCaptureReviewModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs">
+            Repetir Foto
+          </button>
+          <button onclick="submitCapturedCode()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md shadow-rose-600/20">
+            Aceptar / Buscar
+          </button>
+        </div>
+
+      </div>
+    </div>
 
     <!-- ============================================== -->
     <!-- 2. FORMULARIO PRODUCTO (ALTA / EDICIÓN) -->
@@ -216,19 +279,17 @@
 
           <div>
             <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nombre del Producto *</label>
-            <input type="text" id="input-name" required placeholder="Ej: Bote Pepinillos, Chupachups Fresa..." class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-rose-500 outline-none">
+            <input type="text" id="input-name" required placeholder="Ej: Bote Pepinillos, Chupa Chups Fresa..." class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-rose-500 outline-none">
           </div>
 
-          <!-- CAMPOS CONDICIONALES DE CADA CATEGORÍA -->
+          <!-- CAMPOS SEGÚN CATEGORÍA -->
           <div id="category-specific-fields" class="space-y-3 bg-amber-50/50 p-3.5 rounded-xl border border-amber-200">
             
-            <!-- 1. Encurtido: Unidades -->
             <div id="field-encurtido-unidades" class="hidden">
               <label class="block text-xs font-bold uppercase text-amber-900 mb-1">Unidades / Formato (Introducir) *</label>
-              <input type="text" id="input-unidades" placeholder="Ej: 12 botes, Lata 500g, Pack de 3..." class="w-full bg-white border border-slate-300 text-slate-800 text-sm rounded-xl px-3 py-2 focus:ring-2 focus:ring-rose-500 outline-none">
+              <input type="text" id="input-unidades" placeholder="Ej: 12 botes, Lata 500g, Pack 3..." class="w-full bg-white border border-slate-300 text-slate-800 text-sm rounded-xl px-3 py-2 focus:ring-2 focus:ring-rose-500 outline-none">
             </div>
 
-            <!-- 2. Caramelos: Tipo y Textura -->
             <div id="field-caramelos" class="hidden space-y-3">
               <div>
                 <label class="block text-xs font-bold uppercase text-amber-900 mb-1">Sabor / Variedad</label>
@@ -247,7 +308,6 @@
               </div>
             </div>
 
-            <!-- 4. Pastas: Azúcar, Textura, Sabor -->
             <div id="field-pastas" class="hidden space-y-3">
               <div>
                 <label class="block text-xs font-bold uppercase text-amber-900 mb-1">Azúcar</label>
@@ -273,7 +333,6 @@
               </div>
             </div>
 
-            <!-- 5. Chicles & Caramelos -->
             <div id="field-chicles" class="hidden">
               <label class="block text-xs font-bold uppercase text-amber-900 mb-1">Tipo</label>
               <select id="input-chicle-tipo" class="w-full bg-white border border-slate-300 text-slate-800 text-sm rounded-xl px-3 py-2">
@@ -284,7 +343,6 @@
               </select>
             </div>
 
-            <!-- 7. Bebidas: Sabor libre teclado -->
             <div id="field-bebidas" class="hidden">
               <label class="block text-xs font-bold uppercase text-amber-900 mb-1">Sabor (Escribir por teclado) *</label>
               <input type="text" id="input-bebida-sabor" placeholder="Ej: Cola, Fresa, Naranja Zero, Limón..." class="w-full bg-white border border-slate-300 text-slate-800 text-sm rounded-xl px-3 py-2 focus:ring-2 focus:ring-rose-500 outline-none">
@@ -295,7 +353,7 @@
             </div>
           </div>
 
-          <!-- PRECIO (En todas las categorías) -->
+          <!-- PRECIO -->
           <div>
             <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Precio de Venta (€) *</label>
             <div class="relative">
@@ -334,9 +392,7 @@
           </button>
         </div>
 
-        <div id="order-items-list" class="divide-y divide-slate-100 max-h-96 overflow-y-auto pr-1">
-          <!-- Dinámico -->
-        </div>
+        <div id="order-items-list" class="divide-y divide-slate-100 max-h-96 overflow-y-auto pr-1"></div>
 
         <div class="mt-4 pt-3 border-t-2 border-slate-200 flex justify-between items-baseline">
           <span class="text-sm font-bold text-slate-600 uppercase">Total Pedido:</span>
@@ -420,12 +476,14 @@
 
   <div id="print-area" class="hidden"></div>
 
-  <!-- JAVASCRIPT LOGIC -->
+  <!-- JAVASCRIPT -->
   <script>
     let products = JSON.parse(localStorage.getItem('tienda_productos') || '{}');
     let currentOrder = JSON.parse(localStorage.getItem('tienda_pedido_actual') || '[]');
     let html5QrCode = null;
     let cameraRunning = false;
+    let currentZoomLevel = 1.0;
+    let torchActive = false;
     let lastScanTime = 0;
     let lastScannedCode = null;
 
@@ -454,21 +512,14 @@
       } catch (e) {}
     }
 
-    // INICIAR CÁMARA AUTOMÁTICAMENTE
+    // INICIAR CÁMARA TRASERA
     async function startCamera() {
       const loadingMsg = document.getElementById('camera-loading-message');
       const laser = document.getElementById('scanner-laser');
-      const statusPill = document.getElementById('scan-status-pill');
-
-      // Comprobar si estamos en file://
-      if (window.location.protocol === 'file:') {
-        document.getElementById('protocol-warning').classList.remove('hidden');
-      }
 
       try {
         loadingMsg.classList.remove('hidden');
 
-        // Configuración con TODOS los formatos comerciales de códigos de barra (EAN-13, EAN-8, UPC, Code 128)
         const formatsToSupport = [
           Html5QrcodeSupportedFormats.EAN_13,
           Html5QrcodeSupportedFormats.EAN_8,
@@ -484,26 +535,18 @@
           html5QrCode = new Html5Qrcode("reader", {
             formatsToSupport: formatsToSupport,
             verbose: false,
-            experimentalFeatures: {
-              useBarCodeDetectorIfSupported: true // Rendimiento nativo de alta velocidad
-            }
+            experimentalFeatures: { useBarCodeDetectorIfSupported: true }
           });
         }
 
-        // Si ya estuviera corriendo, pararla antes
         if (cameraRunning) {
           await html5QrCode.stop();
           cameraRunning = false;
         }
 
-        // Configuración rectangular optimizada para códigos de barras alargados
         const qrConfig = {
           fps: 15,
-          qrbox: (viewfinderWidth, viewfinderHeight) => {
-            const width = Math.floor(viewfinderWidth * 0.85);
-            const height = Math.floor(viewfinderHeight * 0.45);
-            return { width: Math.max(width, 240), height: Math.max(height, 100) };
-          },
+          qrbox: (w, h) => ({ width: Math.floor(w * 0.88), height: Math.floor(h * 0.5) }),
           aspectRatio: 1.777778
         };
 
@@ -511,15 +554,13 @@
           { facingMode: "environment" },
           qrConfig,
           onBarcodeDecoded,
-          (err) => {} // Errores normales por fotogramas vacíos
+          (err) => {}
         );
 
         cameraRunning = true;
         loadingMsg.classList.add('hidden');
         laser.classList.remove('hidden');
-        statusPill.textContent = "Escaneando...";
-        statusPill.className = "text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold";
-        document.getElementById('camera-btn-text').textContent = "Pausar Cámara";
+        setZoom(currentZoomLevel); // Restaura el nivel de zoom
       } catch (err) {
         console.error("Error al iniciar cámara:", err);
         loadingMsg.innerHTML = `
@@ -530,7 +571,6 @@
             Reintentar
           </button>
         `;
-        statusPill.textContent = "Inactiva";
       }
     }
 
@@ -539,56 +579,149 @@
         await html5QrCode.stop();
         cameraRunning = false;
         document.getElementById('scanner-laser').classList.add('hidden');
-        document.getElementById('camera-btn-text').textContent = "Activar Cámara";
-        document.getElementById('scan-status-pill').textContent = "Pausada";
       }
     }
 
     function toggleCamera() {
-      if (cameraRunning) {
-        stopCamera();
-      } else {
-        startCamera();
+      if (cameraRunning) stopCamera();
+      else startCamera();
+    }
+
+    // CONTROL DE ZOOM (AMPLIAR IMAGEN PARA CÓDIGOS PEQUEÑOS)
+    function setZoom(level) {
+      currentZoomLevel = level;
+      
+      // Actualizar botones UI
+      ['zoom-btn-1', 'zoom-btn-2', 'zoom-btn-3'].forEach(id => {
+        const btn = document.getElementById(id);
+        btn.classList.remove('bg-rose-600', 'text-white');
+        btn.classList.add('text-white/80');
+      });
+
+      if (level === 1.0) document.getElementById('zoom-btn-1').classList.add('bg-rose-600', 'text-white');
+      else if (level <= 2.0) document.getElementById('zoom-btn-2').classList.add('bg-rose-600', 'text-white');
+      else document.getElementById('zoom-btn-3').classList.add('bg-rose-600', 'text-white');
+
+      // 1. Intentar Zoom de Hardware de la lente
+      try {
+        const videoElem = document.querySelector('#reader video');
+        if (videoElem && videoElem.srcObject) {
+          const track = videoElem.srcObject.getVideoTracks()[0];
+          const caps = track.getCapabilities ? track.getCapabilities() : {};
+          if (caps.zoom) {
+            const min = caps.zoom.min || 1;
+            const max = caps.zoom.max || 5;
+            const targetZoom = Math.min(Math.max(level, min), max);
+            track.applyConstraints({ advanced: [{ zoom: targetZoom }] });
+          }
+        }
+      } catch (e) {}
+
+      // 2. Zoom digital visual (CSS scale) para garantizar que siempre se amplíe
+      const video = document.querySelector('#reader video');
+      if (video) {
+        video.style.transform = `scale(${level})`;
       }
     }
 
-    // LECTURA DE CÓDIGO EXITOSA
-    function onBarcodeDecoded(decodedText) {
-      const now = Date.now();
-      // Evitar doble lectura dentro de 2.5 segundos del mismo código
-      if (decodedText === lastScannedCode && (now - lastScanTime < 2500)) {
+    // CONTROL DE LINTERNA (FLASH)
+    async function toggleTorch() {
+      try {
+        const videoElem = document.querySelector('#reader video');
+        if (!videoElem || !videoElem.srcObject) return;
+        const track = videoElem.srcObject.getVideoTracks()[0];
+        const caps = track.getCapabilities ? track.getCapabilities() : {};
+
+        if (!caps.torch) {
+          alert("Tu dispositivo o navegador no soporta encender la linterna.");
+          return;
+        }
+
+        torchActive = !torchActive;
+        await track.applyConstraints({ advanced: [{ torch: torchActive }] });
+        document.getElementById('torch-text').textContent = torchActive ? "Apagar" : "Luz";
+        document.getElementById('btn-torch').className = torchActive ? 
+          "text-xs bg-amber-500 text-white px-2.5 py-1.5 rounded-lg font-bold transition flex items-center gap-1" : 
+          "text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg font-medium transition flex items-center gap-1";
+      } catch (err) {
+        alert("No se pudo controlar la linterna.");
+      }
+    }
+
+    // CAPTURAR FOTO Y REVISAR/CORREGIR NÚMEROS
+    async function captureAndReviewCode() {
+      const video = document.querySelector('#reader video');
+      if (!video) {
+        alert("La cámara no está activa.");
         return;
       }
+
+      // 1. Congelar el fotograma actual en un Canvas de alta resolución
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+
+      // Mostrar foto en el modal
+      document.getElementById('capture-preview-img').src = dataUrl;
+      const input = document.getElementById('capture-code-input');
+      const badge = document.getElementById('capture-status-badge');
+      const badgeText = document.getElementById('capture-status-text');
+      const badgeIcon = document.getElementById('capture-status-icon');
+
+      input.value = '';
+      badge.className = "p-2 rounded-xl text-xs flex items-center gap-2 font-medium bg-slate-100 text-slate-700 border border-slate-200";
+      badgeIcon.className = "fa-solid fa-spinner fa-spin text-rose-500";
+      badgeText.textContent = "Analizando código de la foto...";
+
+      // Abrir modal inmediatamente
+      document.getElementById('modal-capture-review').classList.remove('hidden');
+
+      // 2. Intentar decodificar el código de barras de la imagen congelada
+      canvas.toBlob(async (blob) => {
+        const file = new File([blob], "snapshot.jpg", { type: "image/jpeg" });
+        try {
+          const decoded = await html5QrCode.scanFile(file, true);
+          // Si lo leyó con éxito
+          notifySuccess();
+          input.value = decoded;
+          badge.className = "p-2 rounded-xl text-xs flex items-center gap-2 font-medium bg-emerald-50 text-emerald-800 border border-emerald-200";
+          badgeIcon.className = "fa-solid fa-circle-check text-emerald-600";
+          badgeText.textContent = "¡Código leído! Revisa si coincide con la foto.";
+        } catch (err) {
+          // Si no lo pudo leer automáticamente
+          badge.className = "p-2 rounded-xl text-xs flex items-center gap-2 font-medium bg-amber-50 text-amber-800 border border-amber-200";
+          badgeIcon.className = "fa-solid fa-triangle-exclamation text-amber-600";
+          badgeText.textContent = "No se detectó bien. Escribe los números de la foto.";
+          input.focus();
+        }
+      }, 'image/jpeg');
+    }
+
+    function closeCaptureReviewModal() {
+      document.getElementById('modal-capture-review').classList.add('hidden');
+    }
+
+    function submitCapturedCode() {
+      const code = document.getElementById('capture-code-input').value.trim();
+      if (!code) {
+        alert("Por favor introduce los números del código de barras.");
+        return;
+      }
+      closeCaptureReviewModal();
+      processBarcode(code);
+    }
+
+    // PROCESAMIENTO AUTOMÁTICO DE ESCANEO CONTINUO
+    function onBarcodeDecoded(decodedText) {
+      const now = Date.now();
+      if (decodedText === lastScannedCode && (now - lastScanTime < 2500)) return;
       lastScanTime = now;
       lastScannedCode = decodedText;
       processBarcode(decodedText);
-    }
-
-    // ESCANEAR DESDE FOTO O ARCHIVO (Alternativa infalible)
-    function scanFromImage(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      if (!html5QrCode) {
-        html5QrCode = new Html5Qrcode("reader", {
-          formatsToSupport: [
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.EAN_8,
-            Html5QrcodeSupportedFormats.UPC_A,
-            Html5QrcodeSupportedFormats.UPC_E,
-            Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.CODE_39
-          ]
-        });
-      }
-
-      html5QrCode.scanFile(file, true)
-        .then(decodedText => {
-          processBarcode(decodedText);
-        })
-        .catch(err => {
-          alert("No se pudo leer ningún código de barras en la imagen. Intenta con una foto más nítida e iluminada.");
-        });
     }
 
     function handleManualSearch() {
@@ -597,7 +730,6 @@
       processBarcode(val);
     }
 
-    // PROCESAMIENTO DEL PRODUCTO
     function processBarcode(code) {
       const product = products[code];
       const cardFound = document.getElementById('card-found');
@@ -612,9 +744,7 @@
         document.getElementById('found-name').textContent = product.name;
         document.getElementById('found-category').textContent = formatCategoryName(product.category);
         document.getElementById('found-price').textContent = Number(product.price).toFixed(2) + ' €';
-
-        const detailsContainer = document.getElementById('found-details');
-        detailsContainer.innerHTML = generateDetailBadges(product);
+        document.getElementById('found-details').innerHTML = generateDetailBadges(product);
       } else {
         notifyNotFound();
         cardFound.classList.add('hidden');
@@ -639,24 +769,17 @@
 
     function generateDetailBadges(p) {
       let html = '';
-      if (p.category === 'encurtido' && p.unidades) {
-        html += `<div><strong>Formato / Unidades:</strong> ${p.unidades}</div>`;
-      } else if (p.category === 'caramelo') {
-        html += `<div><strong>Sabor:</strong> ${p.carameloTipo || '-'} | <strong>Textura:</strong> ${p.carameloTextura || '-'}</div>`;
-      } else if (p.category === 'pasta') {
-        html += `<div><strong>Azúcar:</strong> ${p.pastaAzucar || '-'} | <strong>Textura:</strong> ${p.pastaTextura || '-'} | <strong>Sabor:</strong> ${p.pastaSabor || '-'}</div>`;
-      } else if (p.category === 'chicles_caramelos') {
-        html += `<div><strong>Tipo:</strong> ${p.chicleTipo || '-'}</div>`;
-      } else if (p.category === 'bebida') {
-        html += `<div><strong>Sabor:</strong> ${p.bebidaSabor || '-'}</div>`;
-      }
+      if (p.category === 'encurtido' && p.unidades) html += `<div><strong>Formato / Unidades:</strong> ${p.unidades}</div>`;
+      else if (p.category === 'caramelo') html += `<div><strong>Sabor:</strong> ${p.carameloTipo || '-'} | <strong>Textura:</strong> ${p.carameloTextura || '-'}</div>`;
+      else if (p.category === 'pasta') html += `<div><strong>Azúcar:</strong> ${p.pastaAzucar || '-'} | <strong>Textura:</strong> ${p.pastaTextura || '-'} | <strong>Sabor:</strong> ${p.pastaSabor || '-'}</div>`;
+      else if (p.category === 'chicles_caramelos') html += `<div><strong>Tipo:</strong> ${p.chicleTipo || '-'}</div>`;
+      else if (p.category === 'bebida') html += `<div><strong>Sabor:</strong> ${p.bebidaSabor || '-'}</div>`;
       return html || '<div class="text-slate-400 italic">Sin atributos adicionales</div>';
     }
 
-    // FORMULARIO Y JERARQUÍA
+    // FORMULARIO DINÁMICO
     function handleCategoryChange() {
       const cat = document.getElementById('input-category').value;
-      
       document.getElementById('field-encurtido-unidades').classList.add('hidden');
       document.getElementById('field-caramelos').classList.add('hidden');
       document.getElementById('field-pastas').classList.add('hidden');
@@ -664,19 +787,12 @@
       document.getElementById('field-bebidas').classList.add('hidden');
       document.getElementById('field-default-hint').classList.add('hidden');
 
-      if (cat === 'encurtido') {
-        document.getElementById('field-encurtido-unidades').classList.remove('hidden');
-      } else if (cat === 'caramelo') {
-        document.getElementById('field-caramelos').classList.remove('hidden');
-      } else if (cat === 'pasta') {
-        document.getElementById('field-pastas').classList.remove('hidden');
-      } else if (cat === 'chicles_caramelos') {
-        document.getElementById('field-chicles').classList.remove('hidden');
-      } else if (cat === 'bebida') {
-        document.getElementById('field-bebidas').classList.remove('hidden');
-      } else {
-        document.getElementById('field-default-hint').classList.remove('hidden');
-      }
+      if (cat === 'encurtido') document.getElementById('field-encurtido-unidades').classList.remove('hidden');
+      else if (cat === 'caramelo') document.getElementById('field-caramelos').classList.remove('hidden');
+      else if (cat === 'pasta') document.getElementById('field-pastas').classList.remove('hidden');
+      else if (cat === 'chicles_caramelos') document.getElementById('field-chicles').classList.remove('hidden');
+      else if (cat === 'bebida') document.getElementById('field-bebidas').classList.remove('hidden');
+      else document.getElementById('field-default-hint').classList.remove('hidden');
     }
 
     function openAddProductWithCode() {
@@ -731,14 +847,7 @@
         return;
       }
 
-      const prod = {
-        barcode,
-        name,
-        category,
-        price,
-        updatedAt: new Date().toISOString()
-      };
-
+      const prod = { barcode, name, category, price, updatedAt: new Date().toISOString() };
       if (category === 'encurtido') prod.unidades = document.getElementById('input-unidades').value.trim();
       else if (category === 'caramelo') {
         prod.carameloTipo = document.getElementById('input-caramelo-tipo').value;
@@ -757,7 +866,7 @@
       localStorage.setItem('tienda_productos', JSON.stringify(products));
       updateBadge();
 
-      showToast("¡Producto guardado!");
+      showToast("¡Producto guardado con éxito!");
       switchView('scanner');
       processBarcode(barcode);
     }
@@ -772,9 +881,9 @@
       const prod = products[barcode];
       if (!prod) return;
 
-      const existingIndex = currentOrder.findIndex(item => item.barcode === barcode);
-      if (existingIndex > -1) {
-        currentOrder[existingIndex].qty += qty;
+      const existing = currentOrder.find(item => item.barcode === barcode);
+      if (existing) {
+        existing.qty += qty;
       } else {
         currentOrder.push({
           barcode: prod.barcode,
@@ -786,14 +895,12 @@
       }
 
       saveOrderState();
-      showToast(`+${qty} "${prod.name}" añadido al pedido`);
+      showToast(`+${qty} "${prod.name}" al pedido`);
     }
 
     function changeOrderQty(index, delta) {
       currentOrder[index].qty += delta;
-      if (currentOrder[index].qty <= 0) {
-        currentOrder.splice(index, 1);
-      }
+      if (currentOrder[index].qty <= 0) currentOrder.splice(index, 1);
       saveOrderState();
       renderOrderView();
     }
@@ -854,7 +961,7 @@
       totalContainer.textContent = total.toFixed(2) + ' €';
     }
 
-    // EXPORTACIÓN & IMPRESIÓN
+    // IMPRESIÓN Y EXPORTACIÓN
     function printOrder() {
       if (currentOrder.length === 0) return alert("El pedido está vacío.");
       let total = 0;
@@ -915,7 +1022,7 @@
 
     function exportToCSV() {
       const keys = Object.keys(products);
-      if (keys.length === 0) return alert("No hay productos en el catálogo.");
+      if (keys.length === 0) return alert("No hay productos.");
       let csv = "\uFEFFCódigo,Nombre,Categoría,Precio,Detalles\n";
       keys.forEach(k => {
         const p = products[k];
@@ -1084,10 +1191,9 @@
         document.getElementById('nav-scanner').classList.remove('text-slate-400');
         if (!cameraRunning) startCamera();
       } else {
-        stopCamera(); // Ahorra batería si no está en escáner
-        if (viewName === 'form') {
-          document.getElementById('view-form').classList.remove('hidden');
-        } else if (viewName === 'order') {
+        stopCamera();
+        if (viewName === 'form') document.getElementById('view-form').classList.remove('hidden');
+        else if (viewName === 'order') {
           document.getElementById('view-order').classList.remove('hidden');
           document.getElementById('nav-order').classList.add('text-rose-600', 'font-bold');
           document.getElementById('nav-order').classList.remove('text-slate-400');
@@ -1123,10 +1229,10 @@
       setTimeout(() => toast.remove(), 2200);
     }
 
-    // ARRANQUE AUTOMÁTICO AL ENTRAR
+    // ARRANQUE AUTOMÁTICO
     window.addEventListener('DOMContentLoaded', () => {
       updateBadge();
-      startCamera(); // Inicia la cámara inmediatamente
+      startCamera();
     });
   </script>
 </body>
